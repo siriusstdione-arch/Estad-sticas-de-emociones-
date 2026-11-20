@@ -1,0 +1,1238 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudio de Personajes & Emociones</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e32',
+                            950: '#0a0f1c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Estilos personalizados para barras deslizadoras (sliders) */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px;
+            background-color: #ffffff;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+        /* Scrollbar sutil */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- Barra Superior -->
+    <header class="bg-slate-900/85 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+            <!-- Marca -->
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                    </svg>
+                </div>
+                <div class="truncate">
+                    <h1 class="font-bold text-base sm:text-lg tracking-tight text-white leading-tight truncate">Estudio de Personajes</h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Fichas emocionales y estadísticas RPG</p>
+                </div>
+            </div>
+
+            <!-- Acciones de Cabecera -->
+            <div class="flex items-center gap-2 sm:gap-2.5 shrink-0">
+                <span id="save-indicator" class="text-xs text-emerald-400 hidden lg:flex items-center gap-1 opacity-0 transition-opacity duration-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    Guardado
+                </span>
+
+                <!-- Botón Vista Previa / Pantalla Final -->
+                <button id="toggle-preview-btn" onclick="togglePreviewMode()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-medium text-xs sm:text-sm px-3.5 py-2.5 rounded-xl flex items-center gap-2 transition-all">
+                    <svg class="w-4 h-4 text-indigo-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span id="toggle-preview-label">Pantalla Final</span>
+                </button>
+
+                <!-- Botón Compartir Tarjeta -->
+                <button id="header-share-btn" onclick="openShareModal()" class="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-medium text-xs sm:text-sm px-3.5 py-2.5 rounded-xl flex items-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+                    </svg>
+                    <span class="hidden sm:inline">Compartir Tarjeta</span>
+                </button>
+
+                <!-- Botón Restaurar ejemplos -->
+                <button id="reset-defaults-btn" onclick="resetToDefaults()" title="Restaurar personajes de ejemplo" class="p-2.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors text-xs flex items-center gap-1.5">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/>
+                    </svg>
+                    <span class="hidden md:inline">Restaurar</span>
+                </button>
+
+                <!-- Botón Nuevo Personaje -->
+                <button id="new-char-btn" onclick="addNewCharacter()" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-xs sm:text-sm px-3.5 sm:px-4 py-2.5 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition-all">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                    </svg>
+                    <span>Nuevo Personaje</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Banner cuando se abre un enlace compartido (#share=...) -->
+    <div id="shared-link-banner" class="hidden bg-indigo-950/90 border-b border-indigo-500/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs sm:text-sm text-indigo-200">
+                <span class="px-2 py-0.5 rounded-md bg-indigo-500/30 border border-indigo-400/40 font-semibold text-xs text-white">Tarjeta Compartida</span>
+                <span>Estás viendo la tarjeta final de solo lectura de este personaje.</span>
+            </div>
+            <button onclick="exitSharedLinkToEditor()" class="bg-white hover:bg-indigo-50 text-slate-950 font-semibold text-xs px-3.5 py-2 rounded-xl shadow transition-all">
+                Abrir mi Estudio / Editar
+            </button>
+        </div>
+    </div>
+
+    <!-- Contenedor Principal -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        
+        <!-- Carrusel Horizontal Superior de Personajes -->
+        <div id="carousel-section" class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    Elenco de Personajes (<span id="char-count">0</span>)
+                </h2>
+            </div>
+            <div id="character-tabs" class="flex items-center gap-3 overflow-x-auto pb-2">
+                <!-- Tarjetas rápidas de selección -->
+            </div>
+        </div>
+
+        <!-- MODO EDICIÓN: Dos tarjetas principales (Izquierda Identidad Visual, Derecha Estadísticas y Emociones) -->
+        <div id="editor-container" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Renderizado dinámico -->
+        </div>
+
+        <!-- MODO PANTALLA FINAL / VISTA PREVIA DE SOLO LECTURA -->
+        <div id="preview-container" class="hidden">
+            <!-- Renderizado dinámico -->
+        </div>
+
+        <!-- Estado Vacío (solo si se eliminan todos los personajes) -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center text-center py-20 px-4 bg-slate-900/50 border border-slate-800/80 rounded-3xl">
+            <div class="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-4 text-slate-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2">No hay personajes en tu elenco</h3>
+            <p class="text-slate-400 max-w-md mb-6 text-sm">Crea tu primer personaje para personalizar su retrato, nombre y niveles emocionales.</p>
+            <button onclick="addNewCharacter()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-3 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition-all">
+                <span>+ Crear Primer Personaje</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Modal de Confirmación de Eliminación -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Eliminar personaje</h3>
+            <p class="text-sm text-slate-300 mb-6">
+                ¿Estás seguro de que deseas eliminar a <strong id="delete-char-name" class="text-white">este personaje</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-delete-btn" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition-colors">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal para Cambiar Imagen mediante URL -->
+    <div id="url-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Enlace de fotografía</h3>
+            <p class="text-xs text-slate-400 mb-4">Pega la dirección URL de una imagen para usarla como retrato del personaje.</p>
+            <input type="url" id="image-url-input" placeholder="https://ejemplo.com/avatar.jpg" class="w-full bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-sm text-white outline-none mb-5">
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeUrlModal()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="applyImageUrl()" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
+                    Guardar Imagen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Sencillo de Compartir Tarjeta (PNG + Enlace #share=...) -->
+    <div id="share-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl">
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Compartir Tarjeta</h3>
+                    <p id="share-modal-subtitle" class="text-xs text-slate-400">Comparte las emociones de este personaje</p>
+                </div>
+                <button onclick="closeShareModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors" aria-label="Cerrar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Opción 1: Descargar PNG -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                    <h4 class="text-sm font-semibold text-white mb-1">1. Descargar Tarjeta como Imagen (PNG)</h4>
+                    <p class="text-xs text-slate-400 mb-3">Genera una tarjeta limpia con el retrato, nombre, rol y barras de emociones lista para enviar por chat o redes.</p>
+                    <button onclick="downloadCharacterPNG()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                        </svg>
+                        <span>Descargar Imagen PNG</span>
+                    </button>
+                </div>
+
+                <!-- Opción 2: Copiar Enlace Compartible (#share=...) -->
+                <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                    <h4 class="text-sm font-semibold text-white mb-1">2. Copiar Enlace de Solo Lectura</h4>
+                    <p class="text-xs text-slate-400 mb-3">Quien abra este enlace verá directamente la Pantalla Final de este personaje sin controles de edición.</p>
+                    <div id="share-local-img-note" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2.5 mb-3">
+                        Nota: La foto subida localmente es muy pesada para una URL; en el enlace se mostrará su inicial (para incluir la foto completa, usa la descarga PNG).
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <input type="text" id="share-url-field" readonly class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2.5 text-xs text-slate-300 outline-none select-all">
+                        <button onclick="copyShareUrl()" id="copy-share-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3.5 py-2.5 rounded-xl shrink-0 transition-all">
+                            Copiar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Paleta de colores para las barras de emociones
+        const STAT_COLORS = [
+            { name: 'Amarillo', bg: 'bg-amber-400', text: 'text-amber-400', hex: '#fbbf24' },
+            { name: 'Azul',     bg: 'bg-sky-400',   text: 'text-sky-400',   hex: '#38bdf8' },
+            { name: 'Rojo',     bg: 'bg-rose-500',  text: 'text-rose-400',  hex: '#f43f5e' },
+            { name: 'Verde',    bg: 'bg-emerald-400', text: 'text-emerald-400', hex: '#34d399' },
+            { name: 'Morado',   bg: 'bg-purple-500', text: 'text-purple-400', hex: '#a855f7' },
+            { name: 'Naranja',  bg: 'bg-orange-500', text: 'text-orange-400', hex: '#f97316' },
+            { name: 'Cian',     bg: 'bg-teal-400',  text: 'text-teal-400',  hex: '#2dd4bf' },
+            { name: 'Rosa',     bg: 'bg-pink-500',  text: 'text-pink-400',  hex: '#ec4899' }
+        ];
+
+        // 2 Personajes de ejemplo precargados
+        const DEFAULT_CHARACTERS = [
+            {
+                id: 'char-kael',
+                name: 'Kaelen Vance',
+                role: 'Explorador Astral',
+                bio: 'Mantiene la calma bajo presión extrema, aunque guarda una profunda nostalgia por su mundo natal.',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+                stats: [
+                    { id: 's1', name: 'Alegría', value: 65, colorIndex: 0 },
+                    { id: 's2', name: 'Serenidad', value: 85, colorIndex: 1 },
+                    { id: 's3', name: 'Ira', value: 20, colorIndex: 2 },
+                    { id: 's4', name: 'Curiosidad', value: 92, colorIndex: 4 }
+                ]
+            },
+            {
+                id: 'char-lyra',
+                name: 'Lyra Solis',
+                role: 'Alquimista Ígnea',
+                bio: 'Impulsiva, apasionada y tremendamente leal a su gremio. Sus emociones alimentan su magia.',
+                avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+                stats: [
+                    { id: 's5', name: 'Euforia', value: 88, colorIndex: 5 },
+                    { id: 's6', name: 'Furia', value: 74, colorIndex: 2 },
+                    { id: 's7', name: 'Empatía', value: 80, colorIndex: 3 },
+                    { id: 's8', name: 'Miedo', value: 15, colorIndex: 1 }
+                ]
+            }
+        ];
+
+        const STORAGE_KEY = 'rpg_character_studio_v1';
+
+        // Estado global
+        let characters = [];
+        let activeCharacterId = null;
+        let characterIdToDelete = null;
+        let isPreviewMode = false;
+        let sharedCharacterOnly = null; // Si viene desde #share=...
+
+        // Codificación / decodificación UTF-8 segura para hash URL
+        function encodeShareData(obj) {
+            const json = JSON.stringify(obj);
+            const bytes = new TextEncoder().encode(json);
+            let binary = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binary).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function decodeShareData(str) {
+            let base64 = str.replace(/-/g, '+').replace(/_/g, '/');
+            while (base64.length % 4) base64 += '=';
+            const binary = atob(base64);
+            const bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return JSON.parse(new TextDecoder().decode(bytes));
+        }
+
+        // Inicialización segura
+        function init() {
+            // Cargar personajes locales (o inicializar con 2 de ejemplo)
+            try {
+                const saved = localStorage.getItem(STORAGE_KEY);
+                if (saved) {
+                    const parsed = JSON.parse(saved);
+                    if (Array.isArray(parsed) && parsed.length > 0) {
+                        characters = parsed;
+                    } else {
+                        characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+                        saveData(true);
+                    }
+                } else {
+                    characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+                    saveData(true);
+                }
+            } catch (e) {
+                console.error('Error leyendo localStorage:', e);
+                characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+            }
+
+            if (characters.length > 0) {
+                activeCharacterId = characters[0].id;
+            }
+
+            // Verificar si se abrió mediante un enlace #share=...
+            checkHashShare();
+            window.addEventListener('hashchange', checkHashShare);
+
+            renderAll();
+        }
+
+        function checkHashShare() {
+            const hash = window.location.hash || '';
+            if (hash.startsWith('#share=')) {
+                try {
+                    const decoded = decodeShareData(hash.slice(7));
+                    if (decoded && decoded.name) {
+                        sharedCharacterOnly = decoded;
+                        isPreviewMode = true;
+                        renderAll();
+                        return;
+                    }
+                } catch (err) {
+                    console.error('Error al leer enlace compartido:', err);
+                }
+            }
+        }
+
+        function exitSharedLinkToEditor() {
+            sharedCharacterOnly = null;
+            isPreviewMode = false;
+            window.history.replaceState(null, '', window.location.pathname + window.location.search);
+            renderAll();
+        }
+
+        // Guardar en localStorage
+        function saveData(silent = false) {
+            try {
+                localStorage.setItem(STORAGE_KEY, JSON.stringify(characters));
+                if (!silent) {
+                    const indicator = document.getElementById('save-indicator');
+                    if (indicator) {
+                        indicator.classList.remove('opacity-0');
+                        clearTimeout(window._saveTimer);
+                        window._saveTimer = setTimeout(() => {
+                            indicator.classList.add('opacity-0');
+                        }, 1600);
+                    }
+                }
+            } catch (e) {
+                console.error('Error guardando datos:', e);
+            }
+        }
+
+        function getFallbackAvatar(name) {
+            const initial = (name || '?').trim().charAt(0).toUpperCase() || '?';
+            return `https://placehold.co/400x400/1e293b/94a3b8?text=${encodeURIComponent(initial)}`;
+        }
+
+        function escapeHtml(text) {
+            if (text === null || text === undefined) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+
+        // Alternar Vista Previa / Pantalla Final
+        function togglePreviewMode() {
+            if (sharedCharacterOnly) {
+                exitSharedLinkToEditor();
+                return;
+            }
+            isPreviewMode = !isPreviewMode;
+            renderAll();
+        }
+
+        // Renderizado maestro
+        function renderAll() {
+            const carouselSection = document.getElementById('carousel-section');
+            const editorContainer = document.getElementById('editor-container');
+            const previewContainer = document.getElementById('preview-container');
+            const emptyState = document.getElementById('empty-state');
+            const sharedBanner = document.getElementById('shared-link-banner');
+            const toggleBtn = document.getElementById('toggle-preview-btn');
+            const toggleLabel = document.getElementById('toggle-preview-label');
+            const resetBtn = document.getElementById('reset-defaults-btn');
+            const newCharBtn = document.getElementById('new-char-btn');
+
+            // Si estamos viendo un enlace compartido directo (#share=...)
+            if (sharedCharacterOnly) {
+                sharedBanner.classList.remove('hidden');
+                carouselSection.classList.add('hidden');
+                editorContainer.classList.add('hidden');
+                emptyState.classList.add('hidden');
+                emptyState.classList.remove('flex');
+                previewContainer.classList.remove('hidden');
+                toggleBtn.classList.add('hidden');
+                resetBtn.classList.add('hidden');
+                newCharBtn.classList.add('hidden');
+
+                renderFinalCard(sharedCharacterOnly, true);
+                return;
+            }
+
+            sharedBanner.classList.add('hidden');
+            toggleBtn.classList.remove('hidden');
+
+            if (characters.length === 0) {
+                carouselSection.classList.add('hidden');
+                editorContainer.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+            carouselSection.classList.remove('hidden');
+
+            renderCharacterTabs();
+
+            const activeChar = characters.find(c => c.id === activeCharacterId) || characters[0];
+            activeCharacterId = activeChar.id;
+
+            if (isPreviewMode) {
+                editorContainer.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                toggleLabel.textContent = 'Volver a Editar';
+                toggleBtn.classList.remove('bg-slate-800', 'text-slate-100');
+                toggleBtn.classList.add('bg-indigo-600', 'text-white', 'border-indigo-500');
+                resetBtn.classList.add('hidden');
+                newCharBtn.classList.add('hidden');
+
+                renderFinalCard(activeChar, false);
+            } else {
+                previewContainer.classList.add('hidden');
+                editorContainer.classList.remove('hidden');
+                toggleLabel.textContent = 'Pantalla Final';
+                toggleBtn.classList.add('bg-slate-800', 'text-slate-100');
+                toggleBtn.classList.remove('bg-indigo-600', 'text-white', 'border-indigo-500');
+                resetBtn.classList.remove('hidden');
+                newCharBtn.classList.remove('hidden');
+
+                renderActiveEditor(activeChar);
+            }
+        }
+
+        // Renderizar Carrusel Horizontal Superior de Personajes
+        function renderCharacterTabs() {
+            const container = document.getElementById('character-tabs');
+            const countEl = document.getElementById('char-count');
+            countEl.textContent = characters.length;
+
+            container.innerHTML = characters.map(char => {
+                const isSelected = char.id === activeCharacterId;
+                return `
+                    <button onclick="selectCharacter('${char.id}')" 
+                        class="flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border transition-all shrink-0 text-left ${
+                            isSelected 
+                            ? 'bg-indigo-600/15 border-indigo-500 shadow-lg shadow-indigo-950/50 text-white' 
+                            : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                        }">
+                        <img src="${char.avatar}" 
+                             onerror="this.src='${getFallbackAvatar(char.name)}'" 
+                             alt="${escapeHtml(char.name)}" 
+                             class="w-10 h-10 rounded-xl object-cover bg-slate-800 border border-white/10">
+                        <div class="max-w-[140px]">
+                            <div class="font-semibold text-sm truncate">${escapeHtml(char.name || 'Sin nombre')}</div>
+                            <div class="text-xs text-slate-400 truncate">${escapeHtml(char.role || 'Personaje')}</div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        // Renderizar el Editor Original (Izquierda: Identidad Visual | Derecha: Estadísticas y Emociones)
+        function renderActiveEditor(char) {
+            const editor = document.getElementById('editor-container');
+
+            let dominantStat = { name: 'Neutral', value: 0, colorIndex: 0 };
+            if (char.stats && char.stats.length > 0) {
+                dominantStat = char.stats.reduce((prev, curr) => (prev.value > curr.value) ? prev : curr);
+            }
+            const domColor = STAT_COLORS[dominantStat.colorIndex % STAT_COLORS.length];
+
+            editor.innerHTML = `
+                <!-- COLUMNA IZQUIERDA: Identidad Visual y Datos del Personaje -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-5">
+                        <span class="text-xs font-semibold uppercase tracking-wider text-indigo-400">Identidad Visual</span>
+                        <div class="flex items-center gap-1.5 bg-slate-950 px-3 py-1 rounded-full border border-slate-800">
+                            <span class="w-2 h-2 rounded-full ${domColor.bg}"></span>
+                            <span class="text-xs text-slate-300">Predomina: <strong class="${domColor.text}">${escapeHtml(dominantStat.name)}</strong></span>
+                        </div>
+                    </div>
+
+                    <!-- Fotografía / Avatar -->
+                    <div class="relative group w-44 h-44 sm:w-52 sm:h-52 mx-auto mb-6">
+                        <img id="char-avatar-preview" 
+                             src="${char.avatar}" 
+                             onerror="this.src='${getFallbackAvatar(char.name)}'"
+                             alt="${escapeHtml(char.name)}" 
+                             class="w-full h-full object-cover rounded-3xl border-2 border-slate-700/80 shadow-2xl bg-slate-950">
+                        
+                        <div class="absolute inset-0 bg-slate-950/75 opacity-0 group-hover:opacity-100 transition-opacity rounded-3xl flex flex-col items-center justify-center gap-2 p-4">
+                            <label class="cursor-pointer w-full bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors shadow-lg">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                <span>Subir Foto</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                            </label>
+                            <button onclick="openUrlModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium py-2.5 px-3 rounded-xl flex items-center justify-center gap-2 transition-colors">
+                                <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 011.242 7.244l-4.5 4.5a4.5 4.5 0 01-6.364-6.364l1.757-1.757m13.35-.622l1.757-1.757a4.5 4.5 0 00-6.364-6.364l-4.5 4.5a4.5 4.5 0 001.242 7.244"/></svg>
+                                <span>Usar URL</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Controles móviles visibles siempre para cambiar foto -->
+                    <div class="flex sm:hidden justify-center gap-2 mb-6">
+                        <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-xs font-medium py-2 px-3 rounded-xl flex items-center gap-1.5">
+                            <span>Subir Foto</span>
+                            <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                        </label>
+                        <button onclick="openUrlModal()" class="bg-slate-800 hover:bg-slate-700 text-xs font-medium py-2 px-3 rounded-xl">
+                            URL
+                        </button>
+                    </div>
+
+                    <!-- Formulario de Datos -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Nombre del Personaje</label>
+                            <input type="text" 
+                                   value="${escapeHtml(char.name)}" 
+                                   oninput="updateCharacterField('name', this.value)"
+                                   placeholder="Ej. Aethelgard"
+                                   class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-base font-bold text-white outline-none transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Título / Arquetipo</label>
+                            <input type="text" 
+                                   value="${escapeHtml(char.role)}" 
+                                   oninput="updateCharacterField('role', this.value)"
+                                   placeholder="Ej. Guardián del Alba"
+                                   class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2 text-sm text-slate-200 outline-none transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Notas de Personalidad</label>
+                            <textarea rows="3" 
+                                      oninput="updateCharacterField('bio', this.value)"
+                                      placeholder="Describe brevemente su temperamento..."
+                                      class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-300 outline-none transition-colors resize-none">${escapeHtml(char.bio)}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Acciones Inferiores de la Tarjeta Izquierda -->
+                    <div class="mt-6 pt-5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                        <button onclick="openShareModal()" class="text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                            <span>Compartir Tarjeta</span>
+                        </button>
+                        <button onclick="openDeleteModal('${char.id}')" class="text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                            <span>Eliminar Personaje</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- COLUMNA DERECHA: Estadísticas y Emociones Editables -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Estadísticas y Emociones</h2>
+                            <p class="text-xs text-slate-400">Edita los nombres, colores y porcentajes o añade nuevas barras.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="togglePreviewMode()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-colors">
+                                Ver Pantalla Final
+                            </button>
+                            <button onclick="addStat()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors">
+                                <span>+ Agregar Emoción</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Lista de Emociones / Estadísticas -->
+                    <div id="stats-list" class="space-y-4">
+                        ${char.stats.length === 0 ? `
+                            <div class="text-center py-12 px-4 bg-slate-950/60 border border-dashed border-slate-800 rounded-2xl">
+                                <p class="text-sm text-slate-400 mb-3">Este personaje aún no tiene emociones registradas.</p>
+                                <button onclick="addStat()" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">+ Añadir primera emoción</button>
+                            </div>
+                        ` : char.stats.map(stat => {
+                            const color = STAT_COLORS[stat.colorIndex % STAT_COLORS.length];
+                            return `
+                                <div class="bg-slate-950/75 border border-slate-800/90 hover:border-slate-700 rounded-2xl p-4 transition-all">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <!-- Selector rápido de color -->
+                                        <button onclick="cycleStatColor('${stat.id}')" 
+                                                title="Cambiar color (${color.name})"
+                                                class="w-7 h-7 rounded-lg ${color.bg} shrink-0 shadow-md hover:scale-105 transition-transform flex items-center justify-center">
+                                        </button>
+
+                                        <!-- Input editable para el nombre de la emoción -->
+                                        <input type="text" 
+                                               value="${escapeHtml(stat.name)}" 
+                                               oninput="updateStatName('${stat.id}', this.value)"
+                                               placeholder="Nombre de emoción..."
+                                               class="flex-1 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 px-1 py-0.5 text-sm sm:text-base font-semibold text-white outline-none transition-colors">
+
+                                        <!-- Valor numérico -->
+                                        <span id="stat-val-${stat.id}" class="text-sm font-bold ${color.text} w-12 text-right tabular-nums">
+                                            ${stat.value}%
+                                        </span>
+
+                                        <!-- Eliminar emoción -->
+                                        <button onclick="deleteStat('${stat.id}')" 
+                                                title="Eliminar emoción"
+                                                class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+
+                                    <!-- Barra visual + Slider interactivo -->
+                                    <div class="relative flex items-center">
+                                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden pointer-events-none">
+                                            <div id="stat-bar-${stat.id}" class="h-full ${color.bg} rounded-full transition-all duration-75" style="width: ${stat.value}%"></div>
+                                        </div>
+                                        <input type="range" 
+                                               min="0" 
+                                               max="100" 
+                                               value="${stat.value}" 
+                                               oninput="updateStatValue('${stat.id}', this.value)"
+                                               class="absolute inset-0 w-full h-full opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity">
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        // Renderizar la Pantalla Final / Vista Previa de Solo Lectura (sin sliders ni botones de edición)
+        function renderFinalCard(char, isSharedView) {
+            const previewContainer = document.getElementById('preview-container');
+
+            let dominantStat = { name: 'Neutral', value: 0, colorIndex: 0 };
+            if (char.stats && char.stats.length > 0) {
+                dominantStat = char.stats.reduce((prev, curr) => (prev.value > curr.value) ? prev : curr);
+            }
+            const domColor = STAT_COLORS[dominantStat.colorIndex % STAT_COLORS.length];
+
+            previewContainer.innerHTML = `
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                        <!-- Franja decorativa superior -->
+                        <div class="h-28 bg-gradient-to-r from-indigo-900/70 via-purple-900/60 to-slate-900 border-b border-slate-800/80 relative px-6 flex items-center justify-end">
+                            <div class="bg-slate-950/75 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full ${domColor.bg}"></span>
+                                <span class="text-xs text-slate-300">Emoción dominante: <strong class="${domColor.text}">${escapeHtml(dominantStat.name)} (${dominantStat.value}%)</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="px-6 sm:px-10 pb-10">
+                            <!-- Retrato + Identidad -->
+                            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 -mt-14 mb-8 relative z-10">
+                                <div class="flex flex-col sm:flex-row sm:items-end gap-5">
+                                    <img src="${char.avatar}" 
+                                         onerror="this.src='${getFallbackAvatar(char.name)}'"
+                                         alt="${escapeHtml(char.name)}" 
+                                         class="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover bg-slate-900 border-4 border-slate-950 shadow-2xl">
+                                    <div class="pt-2">
+                                        <span class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-semibold mb-2">
+                                            ${escapeHtml(char.role || 'Personaje')}
+                                        </span>
+                                        <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight">
+                                            ${escapeHtml(char.name || 'Sin nombre')}
+                                        </h2>
+                                    </div>
+                                </div>
+
+                                <div class="flex items-center gap-2 shrink-0">
+                                    <button onclick="openShareModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                                        <span>Compartir Tarjeta</span>
+                                    </button>
+                                    ${!isSharedView ? `
+                                        <button onclick="togglePreviewMode()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl transition-all">
+                                            Volver a Editar
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+
+                            <!-- Notas de personalidad -->
+                            ${char.bio ? `
+                                <div class="bg-slate-900/75 border border-slate-800 rounded-2xl p-4 sm:p-5 mb-8">
+                                    <p class="text-sm sm:text-base text-slate-300 leading-relaxed">${escapeHtml(char.bio)}</p>
+                                </div>
+                            ` : ''}
+
+                            <!-- Barras limpias de Emociones y Estadísticas -->
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                    Perfil Emocional y Estadísticas
+                                </h3>
+
+                                ${(!char.stats || char.stats.length === 0) ? `
+                                    <p class="text-sm text-slate-500 italic">Este personaje no tiene estadísticas registradas.</p>
+                                ` : `
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        ${char.stats.map(stat => {
+                                            const color = STAT_COLORS[stat.colorIndex % STAT_COLORS.length];
+                                            return `
+                                                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                                                    <div class="flex items-center justify-between mb-2.5">
+                                                        <div class="flex items-center gap-2.5">
+                                                            <span class="w-3 h-3 rounded-full ${color.bg}"></span>
+                                                            <span class="font-semibold text-sm sm:text-base text-white">${escapeHtml(stat.name)}</span>
+                                                        </div>
+                                                        <span class="font-extrabold text-sm sm:text-base ${color.text} tabular-nums">${stat.value}%</span>
+                                                    </div>
+                                                    <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800/80">
+                                                        <div class="h-full ${color.bg} rounded-full transition-all duration-500" style="width: ${stat.value}%"></div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- ACCIONES DE PERSONAJES ---
+
+        function selectCharacter(id) {
+            activeCharacterId = id;
+            renderAll();
+        }
+
+        function addNewCharacter() {
+            isPreviewMode = false;
+            const newId = 'char-' + Date.now();
+            const count = characters.length + 1;
+            const newChar = {
+                id: newId,
+                name: `Personaje #${count}`,
+                role: 'Aventurero',
+                bio: '',
+                avatar: getFallbackAvatar(`P${count}`),
+                stats: [
+                    { id: 'st-' + Date.now() + '-1', name: 'Alegría', value: 50, colorIndex: 0 },
+                    { id: 'st-' + Date.now() + '-2', name: 'Tristeza', value: 30, colorIndex: 1 },
+                    { id: 'st-' + Date.now() + '-3', name: 'Ira', value: 25, colorIndex: 2 },
+                    { id: 'st-' + Date.now() + '-4', name: 'Calma', value: 70, colorIndex: 3 }
+                ]
+            };
+            characters.push(newChar);
+            activeCharacterId = newId;
+            saveData();
+            renderAll();
+        }
+
+        function updateCharacterField(field, value) {
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (!char) return;
+            char[field] = value;
+            saveData();
+            if (field === 'name' || field === 'role') {
+                renderCharacterTabs();
+            }
+        }
+
+        // Subida de fotografía local optimizada
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    const canvas = document.createElement('canvas');
+                    const maxSize = 400;
+                    let w = img.width;
+                    let h = img.height;
+                    if (w > h) {
+                        if (w > maxSize) { h *= maxSize / w; w = maxSize; }
+                    } else {
+                        if (h > maxSize) { w *= maxSize / h; h = maxSize; }
+                    }
+                    canvas.width = w;
+                    canvas.height = h;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, w, h);
+
+                    const compressedDataUrl = canvas.toDataURL('image/jpeg', 0.82);
+                    const char = characters.find(c => c.id === activeCharacterId);
+                    if (char) {
+                        char.avatar = compressedDataUrl;
+                        saveData();
+                        renderAll();
+                    }
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Modal URL de imagen
+        function openUrlModal() {
+            const char = characters.find(c => c.id === activeCharacterId);
+            const input = document.getElementById('image-url-input');
+            input.value = (char && !char.avatar.startsWith('data:')) ? char.avatar : '';
+            const modal = document.getElementById('url-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            input.focus();
+        }
+
+        function closeUrlModal() {
+            const modal = document.getElementById('url-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function applyImageUrl() {
+            const url = document.getElementById('image-url-input').value.trim();
+            if (url) {
+                const char = characters.find(c => c.id === activeCharacterId);
+                if (char) {
+                    char.avatar = url;
+                    saveData();
+                    renderAll();
+                }
+            }
+            closeUrlModal();
+        }
+
+        // --- ACCIONES DE EMOCIONES / ESTADÍSTICAS ---
+
+        function addStat() {
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (!char) return;
+            const nextColor = char.stats.length % STAT_COLORS.length;
+            char.stats.push({
+                id: 'st-' + Date.now(),
+                name: 'Nueva Emoción',
+                value: 50,
+                colorIndex: nextColor
+            });
+            saveData();
+            renderAll();
+        }
+
+        function deleteStat(statId) {
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (!char) return;
+            char.stats = char.stats.filter(s => s.id !== statId);
+            saveData();
+            renderAll();
+        }
+
+        function updateStatName(statId, newName) {
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (!char) return;
+            const stat = char.stats.find(s => s.id === statId);
+            if (stat) {
+                stat.name = newName;
+                saveData();
+            }
+        }
+
+        function updateStatValue(statId, newVal) {
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (!char) return;
+            const stat = char.stats.find(s => s.id === statId);
+            if (stat) {
+                stat.value = parseInt(newVal, 10) || 0;
+                const valEl = document.getElementById(`stat-val-${statId}`);
+                const barEl = document.getElementById(`stat-bar-${statId}`);
+                if (valEl) valEl.textContent = `${stat.value}%`;
+                if (barEl) barEl.style.width = `${stat.value}%`;
+                saveData();
+            }
+        }
+
+        function cycleStatColor(statId) {
+            const char = characters.find(c => c.id === activeCharacterId);
+            if (!char) return;
+            const stat = char.stats.find(s => s.id === statId);
+            if (stat) {
+                stat.colorIndex = (stat.colorIndex + 1) % STAT_COLORS.length;
+                saveData();
+                renderAll();
+            }
+        }
+
+        // --- MODAL DE ELIMINACIÓN ---
+
+        function openDeleteModal(id) {
+            const char = characters.find(c => c.id === id);
+            if (!char) return;
+            characterIdToDelete = id;
+            document.getElementById('delete-char-name').textContent = char.name || 'este personaje';
+            const modal = document.getElementById('delete-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeDeleteModal() {
+            characterIdToDelete = null;
+            const modal = document.getElementById('delete-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        document.getElementById('confirm-delete-btn').addEventListener('click', () => {
+            if (!characterIdToDelete) return;
+            const idx = characters.findIndex(c => c.id === characterIdToDelete);
+            if (idx !== -1) {
+                characters.splice(idx, 1);
+                if (characters.length > 0) {
+                    const nextIdx = Math.min(idx, characters.length - 1);
+                    activeCharacterId = characters[nextIdx].id;
+                } else {
+                    activeCharacterId = null;
+                }
+                saveData();
+                renderAll();
+            }
+            closeDeleteModal();
+        });
+
+        function resetToDefaults() {
+            characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+            activeCharacterId = characters[0].id;
+            isPreviewMode = false;
+            saveData();
+            renderAll();
+        }
+
+        // --- MODAL DE COMPARTIR TARJETA (PNG + #share=...) ---
+
+        function getCurrentTargetCharacter() {
+            if (sharedCharacterOnly) return sharedCharacterOnly;
+            return characters.find(c => c.id === activeCharacterId) || characters[0];
+        }
+
+        function openShareModal() {
+            const char = getCurrentTargetCharacter();
+            if (!char) return;
+
+            document.getElementById('share-modal-subtitle').textContent = `Tarjeta emocional de ${char.name || 'Personaje'}`;
+
+            const isLocalData = typeof char.avatar === 'string' && char.avatar.startsWith('data:');
+            const noteEl = document.getElementById('share-local-img-note');
+            if (isLocalData) {
+                noteEl.classList.remove('hidden');
+            } else {
+                noteEl.classList.add('hidden');
+            }
+
+            const payload = {
+                name: char.name,
+                role: char.role,
+                bio: char.bio,
+                avatar: isLocalData ? getFallbackAvatar(char.name) : char.avatar,
+                stats: char.stats || []
+            };
+
+            const encoded = encodeShareData(payload);
+            const baseUrl = window.location.href.split('#')[0];
+            document.getElementById('share-url-field').value = `${baseUrl}#share=${encoded}`;
+
+            const modal = document.getElementById('share-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('share-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function copyShareUrl() {
+            const input = document.getElementById('share-url-field');
+            input.select();
+            input.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                const btn = document.getElementById('copy-share-btn');
+                btn.textContent = '¡Copiado!';
+                btn.classList.replace('bg-indigo-600', 'bg-emerald-600');
+                setTimeout(() => {
+                    btn.textContent = 'Copiar';
+                    btn.classList.replace('bg-emerald-600', 'bg-indigo-600');
+                }, 1800);
+            } catch (e) {
+                console.error('No se pudo copiar:', e);
+            }
+        }
+
+        // Generar y descargar tarjeta PNG mediante Canvas HTML5
+        async function downloadCharacterPNG() {
+            const char = getCurrentTargetCharacter();
+            if (!char) return;
+
+            const stats = char.stats || [];
+            const width = 880;
+            const rowHeight = 56;
+            const hasBio = Boolean(char.bio && char.bio.trim());
+            const height = 310 + (hasBio ? 65 : 0) + Math.max(1, stats.length) * rowHeight;
+
+            const canvas = document.createElement('canvas');
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+
+            // Fondo oscuro elegante
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+            bgGrad.addColorStop(0, '#0f172a');
+            bgGrad.addColorStop(1, '#060913');
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Cabecera decorativa
+            const topGrad = ctx.createLinearGradient(0, 0, width, 130);
+            topGrad.addColorStop(0, '#312e81');
+            topGrad.addColorStop(0.6, '#4c1d95');
+            topGrad.addColorStop(1, '#1e1b4b');
+            ctx.fillStyle = topGrad;
+            ctx.fillRect(0, 0, width, 130);
+
+            // Borde sutil
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 4;
+            ctx.strokeRect(2, 2, width - 4, height - 4);
+
+            // Cargar avatar
+            const loadImg = (src) => new Promise((resolve) => {
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = src;
+            });
+
+            let avatarImg = await loadImg(char.avatar);
+            if (!avatarImg) {
+                avatarImg = await loadImg(getFallbackAvatar(char.name));
+            }
+
+            // Dibujar avatar con esquinas redondeadas
+            const avX = 52, avY = 64, avSize = 140, avR = 26;
+            ctx.save();
+            drawRoundedRect(ctx, avX, avY, avSize, avSize, avR);
+            ctx.clip();
+            if (avatarImg) {
+                ctx.drawImage(avatarImg, avX, avY, avSize, avSize);
+            } else {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(avX, avY, avSize, avSize);
+            }
+            ctx.restore();
+
+            ctx.strokeStyle = '#0f172a';
+            ctx.lineWidth = 6;
+            drawRoundedRect(ctx, avX, avY, avSize, avSize, avR);
+            ctx.stroke();
+
+            // Arquetipo y Nombre
+            ctx.fillStyle = '#a5b4fc';
+            ctx.font = '600 17px Inter, sans-serif';
+            ctx.fillText((char.role || 'PERSONAJE').toUpperCase(), 216, 110);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = '800 36px Inter, sans-serif';
+            ctx.fillText(char.name || 'Sin nombre', 216, 174);
+
+            let curY = 236;
+
+            // Notas breves
+            if (hasBio) {
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '400 16px Inter, sans-serif';
+                const clippedBio = char.bio.length > 140 ? char.bio.slice(0, 137) + '...' : char.bio;
+                ctx.fillText(clippedBio, 52, curY);
+                curY += 42;
+            }
+
+            // Separador
+            ctx.strokeStyle = '#1e293b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(52, curY);
+            ctx.lineTo(width - 52, curY);
+            ctx.stroke();
+            curY += 36;
+
+            // Encabezado de barras
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '700 14px Inter, sans-serif';
+            ctx.fillText('PERFIL EMOCIONAL Y ESTADÍSTICAS', 52, curY);
+            curY += 28;
+
+            // Barras de emociones
+            const barW = width - 104;
+            stats.forEach(stat => {
+                const color = STAT_COLORS[stat.colorIndex % STAT_COLORS.length];
+
+                ctx.fillStyle = '#f8fafc';
+                ctx.font = '600 18px Inter, sans-serif';
+                ctx.fillText(stat.name, 52, curY);
+
+                ctx.fillStyle = color.hex;
+                ctx.font = '700 18px Inter, sans-serif';
+                const pct = `${stat.value}%`;
+                const pctW = ctx.measureText(pct).width;
+                ctx.fillText(pct, width - 52 - pctW, curY);
+
+                const barY = curY + 10;
+                ctx.fillStyle = '#1e293b';
+                drawRoundedRect(ctx, 52, barY, barW, 13, 6.5);
+                ctx.fill();
+
+                if (stat.value > 0) {
+                    const fillW = Math.max(13, (barW * stat.value) / 100);
+                    ctx.fillStyle = color.hex;
+                    drawRoundedRect(ctx, 52, barY, fillW, 13, 6.5);
+                    ctx.fill();
+                }
+
+                curY += rowHeight;
+            });
+
+            // Descarga automática
+            const link = document.createElement('a');
+            const slug = (char.name || 'personaje').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            link.download = `tarjeta-${slug}.png`;
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function drawRoundedRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        // Iniciar aplicación al cargar
+        window.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+```
