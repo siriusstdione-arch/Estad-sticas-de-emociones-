@@ -1,0 +1,2067 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Estudio de Personajes y Emociones</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    colors: {
+                        slate: {
+                            850: '#151e32',
+                            950: '#0a0f1c',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom range slider styling for emotion/stat bars */
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            background: transparent;
+            cursor: pointer;
+        }
+        input[type="range"]::-webkit-slider-runnable-track {
+            height: 8px;
+            border-radius: 9999px;
+            background: rgba(255, 255, 255, 0.12);
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            margin-top: -5px;
+            background-color: #ffffff;
+            height: 18px;
+            width: 18px;
+            border-radius: 50%;
+            box-shadow: 0 2px 6px rgba(0, 0, 0, 0.45);
+            transition: transform 0.15s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+        }
+
+        /* Subtle scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #475569;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col selection:bg-indigo-500 selection:text-white">
+
+    <!-- Top Navigation Bar -->
+    <header class="bg-slate-900/85 backdrop-blur-md border-b border-slate-800 sticky top-0 z-30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-2 sm:gap-3">
+            <!-- Brand Title and Icon -->
+            <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-lg shadow-indigo-500/20 shrink-0">
+                    <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9.813 15.904L9 18.75l-.813-2.846a4.5 4.5 0 00-3.09-3.09L2.25 12l2.846-.813a4.5 4.5 0 003.09-3.09L9 5.25l.813 2.846a4.5 4.5 0 003.09 3.09L15.75 12l-2.846.813a4.5 4.5 0 00-3.09 3.09z"/>
+                    </svg>
+                </div>
+                <div class="truncate">
+                    <h1 class="font-bold text-sm sm:text-lg tracking-tight text-white leading-tight truncate">Estudio de Personajes y Emociones</h1>
+                    <p class="text-xs text-slate-400 hidden sm:block">Fichas emocionales y estadísticas RPG</p>
+                </div>
+            </div>
+
+            <!-- Action Controls -->
+            <div class="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
+                <span id="save-indicator" class="text-xs text-emerald-400 hidden xl:flex items-center gap-1 opacity-0 transition-opacity duration-300">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5"/></svg>
+                    Guardado
+                </span>
+
+                <!-- Account & Persistence Trigger -->
+                <button id="account-btn" onclick="openAccountModal()" title="Cuentas y guardado persistente" class="bg-slate-800/90 hover:bg-slate-700 border border-slate-700 text-slate-200 font-medium text-xs sm:text-sm px-2.5 sm:px-3 py-2 sm:py-2.5 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all">
+                    <span id="account-dot" class="w-2 h-2 rounded-full bg-amber-400 shrink-0"></span>
+                    <svg class="w-4 h-4 text-purple-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z"/>
+                    </svg>
+                    <span id="account-btn-label" class="max-w-[76px] sm:max-w-[110px] truncate">Invitado</span>
+                </button>
+
+                <!-- Final Screen / Preview Toggle -->
+                <button id="toggle-preview-btn" onclick="togglePreviewMode()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-100 font-medium text-xs sm:text-sm px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all">
+                    <svg class="w-4 h-4 text-indigo-400 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z"/>
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/>
+                    </svg>
+                    <span id="toggle-preview-label">Pantalla Final</span>
+                </button>
+
+                <!-- Share Card Modal Trigger -->
+                <button id="header-share-btn" onclick="openShareModal()" class="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 font-medium text-xs sm:text-sm px-2.5 sm:px-3.5 py-2 sm:py-2.5 rounded-xl flex items-center gap-1.5 sm:gap-2 transition-all">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/>
+                    </svg>
+                    <span class="hidden md:inline">Compartir Tarjeta</span>
+                </button>
+
+                <!-- New Character Button -->
+                <button id="new-char-btn" onclick="addNewCharacter()" class="bg-indigo-600 hover:bg-indigo-500 active:bg-indigo-700 text-white font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center gap-1.5 sm:gap-2 transition-all">
+                    <svg class="w-4 h-4 shrink-0" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/>
+                    </svg>
+                    <span class="hidden sm:inline">Nuevo Personaje</span>
+                    <span class="sm:hidden">Nuevo</span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Shared Read-Only Banner -->
+    <div id="shared-link-banner" class="hidden bg-indigo-950/90 border-b border-indigo-500/30">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3 flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center gap-2 text-xs sm:text-sm text-indigo-200">
+                <span class="px-2 py-0.5 rounded-md bg-indigo-500/30 border border-indigo-400/40 font-semibold text-xs text-white">Tarjeta Compartida</span>
+                <span>Estás viendo la tarjeta final de solo lectura de este personaje.</span>
+            </div>
+            <button onclick="exitSharedLinkToEditor()" class="bg-white hover:bg-indigo-50 text-slate-950 font-semibold text-xs px-3.5 py-2 rounded-xl shadow transition-all">
+                Abrir mi Estudio / Editar
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Workspace -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+
+        <!-- Horizontal Character Strip -->
+        <div id="carousel-section" class="mb-6">
+            <div class="flex items-center justify-between mb-3">
+                <h2 class="text-xs font-semibold uppercase tracking-wider text-slate-400">
+                    ELENCO DE PERSONAJES (<span id="char-count">0</span>)
+                </h2>
+                <button id="reset-defaults-btn" onclick="resetToDefaults()" title="Restaurar personajes de ejemplo" class="text-xs text-slate-400 hover:text-white flex items-center gap-1 transition-colors">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M9 15L3 9m0 0l6-6M3 9h12a6 6 0 010 12h-3"/>
+                    </svg>
+                    <span>Restaurar ejemplos</span>
+                </button>
+            </div>
+            <div id="character-tabs" class="flex items-center gap-3 overflow-x-auto pb-2">
+                <!-- Character selector pills rendered here -->
+            </div>
+        </div>
+
+        <!-- Two-Column Editor Container -->
+        <div id="editor-container" class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Read-Only Final Screen Container -->
+        <div id="preview-container" class="hidden">
+            <!-- Rendered dynamically -->
+        </div>
+
+        <!-- Empty Roster State -->
+        <div id="empty-state" class="hidden flex-col items-center justify-center text-center py-20 px-4 bg-slate-900/50 border border-slate-800/80 rounded-3xl">
+            <div class="w-16 h-16 rounded-2xl bg-slate-800 flex items-center justify-center mb-4 text-slate-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+                </svg>
+            </div>
+            <h3 class="text-xl font-semibold text-white mb-2">No hay personajes en tu elenco</h3>
+            <p class="text-slate-400 max-w-md mb-6 text-sm">Crea tu primer personaje para personalizar su retrato, posición en la relación, nombre y niveles emocionales.</p>
+            <button onclick="addNewCharacter()" class="bg-indigo-600 hover:bg-indigo-500 text-white font-medium px-5 py-3 rounded-xl shadow-lg shadow-indigo-600/25 flex items-center gap-2 transition-all">
+                <span>+ Crear Primer Personaje</span>
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Eliminar personaje</h3>
+            <p class="text-sm text-slate-300 mb-6">
+                ¿Estás seguro de que deseas eliminar a <strong id="delete-char-name" class="text-white">este personaje</strong>? Esta acción no se puede deshacer.
+            </p>
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeDeleteModal()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button id="confirm-delete-btn" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 transition-colors">
+                    Sí, eliminar
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Image URL Modal -->
+    <div id="url-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
+        <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+            <h3 class="text-lg font-bold text-white mb-2">Enlace de fotografía</h3>
+            <p class="text-xs text-slate-400 mb-4">Pega la dirección URL de una imagen para usarla como retrato del personaje.</p>
+            <input type="url" id="image-url-input" placeholder="https://ejemplo.com/avatar.jpg" class="w-full bg-slate-950 border border-slate-700 focus:border-indigo-500 rounded-xl px-4 py-3 text-sm text-white outline-none mb-5">
+            <div class="flex items-center justify-end gap-3">
+                <button onclick="closeUrlModal()" class="px-4 py-2.5 rounded-xl text-sm font-medium text-slate-300 hover:bg-slate-800 transition-colors">
+                    Cancelar
+                </button>
+                <button onclick="applyImageUrl()" class="px-4 py-2.5 rounded-xl text-sm font-medium bg-indigo-600 hover:bg-indigo-500 text-white transition-colors">
+                    Guardar Imagen
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share & Customize Card PNG Modal -->
+    <div id="share-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-4xl w-full p-5 sm:p-6 shadow-2xl my-auto">
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Compartir y Personalizar Tarjeta</h3>
+                    <p id="share-modal-subtitle" class="text-xs text-slate-400">Personaliza la imagen final antes de descargar o compartir</p>
+                </div>
+                <button onclick="closeShareModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors" aria-label="Cerrar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-5 items-start">
+                <!-- Live Canvas Preview -->
+                <div class="lg:col-span-7 bg-slate-950/90 border border-slate-800 rounded-2xl p-3.5 flex flex-col items-center">
+                    <div class="w-full flex items-center justify-between mb-2.5 px-1">
+                        <span class="text-[11px] font-semibold uppercase tracking-wider text-slate-400">Vista Previa en Vivo</span>
+                        <span id="png-dimensions-badge" class="text-[11px] text-slate-500 font-mono">920 px</span>
+                    </div>
+                    <div class="w-full max-h-[440px] overflow-y-auto rounded-xl border border-slate-800/80 bg-slate-950 flex justify-center p-2">
+                        <canvas id="share-live-canvas" class="max-w-full h-auto rounded-lg shadow-lg"></canvas>
+                    </div>
+                </div>
+
+                <!-- Customization Controls + PNG Export + Share Link -->
+                <div class="lg:col-span-5 space-y-4">
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                        <h4 class="text-sm font-semibold text-white mb-3">1. Modificar Imagen de Tarjeta (PNG)</h4>
+
+                        <div class="grid grid-cols-2 gap-2.5 mb-3">
+                            <div class="col-span-2">
+                                <label class="block text-[11px] font-medium text-slate-400 mb-1">Paleta de Color de Tarjeta</label>
+                                <select id="png-theme-select" onchange="updateCardExportOption('theme', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+                                    <option value="cosmic">Cósmico Oscuro</option>
+                                    <option value="aurora">Aurora Violeta</option>
+                                    <option value="emerald">Esmeralda Nocturna</option>
+                                    <option value="crimson">Carmesí Estelar</option>
+                                    <option value="slate">Pizarra Minimal</option>
+                                    <option value="sunset">Ocaso Dorado</option>
+                                    <option value="nebula">Nebulosa Cian</option>
+                                    <option value="twilight">Rosa Crepúsculo</option>
+                                    <option value="amethyst">Amatista Real</option>
+                                    <option value="glacial">Ártico Glacial</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-400 mb-1">Encuadre Vertical</label>
+                                <select id="png-crop-select" onchange="updateCardExportOption('crop', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+                                    <option value="top">Arriba</option>
+                                    <option value="center">Centro</option>
+                                    <option value="bottom">Abajo</option>
+                                </select>
+                            </div>
+
+                            <div>
+                                <label class="block text-[11px] font-medium text-slate-400 mb-1">Forma Foto</label>
+                                <select id="png-shape-select" onchange="updateCardExportOption('shape', this.value)" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+                                    <option value="rounded">Cuadrada redondeada</option>
+                                    <option value="circle">Circular</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap items-center gap-x-4 gap-y-2 mb-3.5 pt-1">
+                            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                                <input type="checkbox" id="png-show-position" checked onchange="updateCardExportOption('showPosition', this.checked)" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                                <span>Mostrar Posición Actual</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                                <input type="checkbox" id="png-show-bio" checked onchange="updateCardExportOption('showBio', this.checked)" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                                <span>Mostrar Descripción</span>
+                            </label>
+                            <label class="flex items-center gap-2 text-xs text-slate-300 cursor-pointer select-none">
+                                <input type="checkbox" id="png-show-stats" checked onchange="updateCardExportOption('showStats', this.checked)" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                                <span>Mostrar Emociones</span>
+                            </label>
+                        </div>
+
+                        <button onclick="downloadCharacterPNG()" class="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs sm:text-sm py-2.5 px-4 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center justify-center gap-2 transition-all">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5M16.5 12L12 16.5m0 0L7.5 12m4.5 4.5V3"/>
+                            </svg>
+                            <span>Descargar Imagen PNG</span>
+                        </button>
+                    </div>
+
+                    <!-- Shareable Read-Only Link (#share=...) -->
+                    <div class="bg-slate-950/80 border border-slate-800 rounded-2xl p-4">
+                        <h4 class="text-sm font-semibold text-white mb-1">2. Enlace Compartible (Solo Lectura)</h4>
+                        <p class="text-xs text-slate-400 mb-2.5">Abre directamente la Pantalla Final de este personaje.</p>
+                        <div id="share-local-img-note" class="hidden text-[11px] text-amber-300 bg-amber-500/10 border border-amber-500/30 rounded-xl p-2 mb-2.5">
+                            Nota: Las fotos subidas localmente son muy pesadas para una URL; en el enlace se mostrará la inicial (usa PNG para incluir la foto).
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <input type="text" id="share-url-field" readonly class="flex-1 bg-slate-900 border border-slate-800 rounded-xl px-3 py-2 text-xs text-slate-300 outline-none select-all">
+                            <button onclick="copyShareUrl()" id="copy-share-btn" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold px-3.5 py-2 rounded-xl shrink-0 transition-all">
+                                Copiar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Local Multi-Account & Persistence Modal -->
+    <div id="account-modal" class="fixed inset-0 z-50 hidden items-center justify-center p-4 bg-slate-950/85 backdrop-blur-sm overflow-y-auto">
+        <div class="bg-slate-900 border border-slate-800 rounded-3xl max-w-md w-full p-6 shadow-2xl my-auto">
+            <div class="flex items-center justify-between pb-4 mb-5 border-b border-slate-800">
+                <div>
+                    <h3 class="text-lg font-bold text-white">Cuenta y Guardado Persistente</h3>
+                    <p class="text-xs text-slate-400">Guarda tus personajes por usuario para no perderlos al volver</p>
+                </div>
+                <button onclick="closeAccountModal()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-800 rounded-xl transition-colors" aria-label="Cerrar">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                </button>
+            </div>
+
+            <!-- Active Session Box -->
+            <div class="bg-slate-950/90 border border-slate-800 rounded-2xl p-4 mb-4">
+                <div class="flex items-center justify-between gap-3 mb-2.5">
+                    <div>
+                        <span class="text-[11px] uppercase tracking-wider text-slate-400 block">Sesión Activa</span>
+                        <strong id="account-active-name" class="text-base font-bold text-white">Invitado / Local</strong>
+                        <span id="account-char-summary" class="text-xs text-slate-400 block mt-0.5">0 personajes guardados</span>
+                    </div>
+                    <button onclick="manualSaveProgress()" id="manual-save-btn" class="bg-emerald-600/20 hover:bg-emerald-600/30 border border-emerald-500/40 text-emerald-300 text-xs font-semibold px-3 py-2 rounded-xl transition-colors">
+                        Guardar ahora
+                    </button>
+                </div>
+
+                <label class="flex items-center justify-between pt-2.5 border-t border-slate-800/80 text-xs text-slate-300 cursor-pointer select-none">
+                    <span>Autoguardado continuo en el navegador</span>
+                    <input type="checkbox" id="autosave-toggle" checked onchange="toggleAutoSave(this.checked)" class="rounded border-slate-700 bg-slate-900 text-indigo-600 focus:ring-indigo-500">
+                </label>
+
+                <div id="account-logout-row" class="hidden pt-2.5 mt-2.5 border-t border-slate-800/80 flex items-center justify-between">
+                    <span class="text-xs text-slate-400">Sesión vinculada a esta cuenta.</span>
+                    <button onclick="logoutAccount()" class="text-xs font-semibold text-rose-400 hover:text-rose-300 px-2.5 py-1 rounded-lg hover:bg-rose-500/10 transition-colors">
+                        Cerrar sesión
+                    </button>
+                </div>
+            </div>
+
+            <!-- Login / Register Form -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4 mb-4">
+                <div class="flex items-center gap-2 mb-3">
+                    <button id="tab-login-btn" onclick="switchAuthTab('login')" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition-colors">
+                        Iniciar Sesión
+                    </button>
+                    <button id="tab-register-btn" onclick="switchAuthTab('register')" class="flex-1 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-400 hover:text-white transition-colors">
+                        Crear Cuenta
+                    </button>
+                </div>
+
+                <div class="space-y-3">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Nombre de usuario</label>
+                        <input type="text" id="auth-username" placeholder="Ej. sirius" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Contraseña o PIN (opcional)</label>
+                        <input type="password" id="auth-password" placeholder="••••" class="w-full bg-slate-900 border border-slate-700 focus:border-indigo-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
+                    </div>
+                    <div id="register-seed-wrap" class="hidden">
+                        <label class="block text-xs font-medium text-slate-400 mb-1">Personajes iniciales de la cuenta</label>
+                        <select id="register-seed-select" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-xs text-white outline-none focus:border-indigo-500">
+                            <option value="current">Importar los personajes que estoy editando ahora</option>
+                            <option value="defaults">Empezar con los 2 personajes de ejemplo</option>
+                        </select>
+                    </div>
+                    <p id="auth-feedback" class="hidden text-xs rounded-xl px-3 py-2"></p>
+                    <button onclick="submitAccountAuth()" id="auth-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-500 text-white font-semibold text-xs sm:text-sm py-2.5 rounded-xl shadow-lg shadow-indigo-600/20 transition-all">
+                        Entrar a mi Cuenta
+                    </button>
+                </div>
+
+                <!-- Saved Accounts Quick Selector -->
+                <div id="saved-accounts-list-wrap" class="hidden mt-4 pt-3 border-t border-slate-800">
+                    <span class="block text-[11px] font-medium text-slate-400 mb-2">Cuentas registradas en este dispositivo:</span>
+                    <div id="saved-accounts-list" class="flex flex-wrap gap-2"></div>
+                </div>
+            </div>
+
+            <!-- JSON Backup Export / Import -->
+            <div class="bg-slate-950/70 border border-slate-800 rounded-2xl p-4">
+                <h4 class="text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">Respaldo JSON (Otro Dispositivo)</h4>
+                <p class="text-xs text-slate-400 mb-3">Exporta un archivo con tus personajes para abrirlos en otro celular o computadora.</p>
+                <div class="flex items-center gap-2">
+                    <button onclick="exportAccountBackup()" class="flex-1 bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold py-2.5 px-3 rounded-xl transition-colors">
+                        Exportar JSON
+                    </button>
+                    <label class="flex-1 cursor-pointer bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold py-2.5 px-3 rounded-xl text-center transition-colors">
+                        Importar JSON
+                        <input type="file" accept=".json,application/json" class="hidden" onchange="importAccountBackup(event)">
+                    </label>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Color palette for emotion/stat bars
+        const STAT_COLORS = [
+            { name: 'Amarillo', bg: 'bg-amber-400',   text: 'text-amber-400',   hex: '#fbbf24' },
+            { name: 'Azul',     bg: 'bg-sky-400',     text: 'text-sky-400',     hex: '#38bdf8' },
+            { name: 'Rojo',     bg: 'bg-rose-500',    text: 'text-rose-400',    hex: '#f43f5e' },
+            { name: 'Verde',    bg: 'bg-emerald-400', text: 'text-emerald-400', hex: '#34d399' },
+            { name: 'Morado',   bg: 'bg-purple-500',  text: 'text-purple-400',  hex: '#a855f7' },
+            { name: 'Naranja',  bg: 'bg-orange-500',  text: 'text-orange-400',  hex: '#f97316' },
+            { name: 'Cian',     bg: 'bg-teal-400',    text: 'text-teal-400',    hex: '#2dd4bf' },
+            { name: 'Rosa',     bg: 'bg-pink-500',    text: 'text-pink-400',    hex: '#ec4899' }
+        ];
+
+        // Ten visual palettes for customizable PNG export
+        const CARD_THEMES = {
+            cosmic: {
+                bgTop: '#0f172a',
+                bgBottom: '#020617',
+                bannerStart: '#312e81',
+                bannerEnd: '#581c87',
+                cardBox: 'rgba(15, 23, 42, 0.85)',
+                border: 'rgba(148, 163, 184, 0.22)',
+                track: '#1e293b',
+                accent: '#818cf8'
+            },
+            aurora: {
+                bgTop: '#19102e',
+                bgBottom: '#090d1a',
+                bannerStart: '#6d28d9',
+                bannerEnd: '#0891b2',
+                cardBox: 'rgba(24, 16, 46, 0.85)',
+                border: 'rgba(192, 132, 252, 0.25)',
+                track: '#271a45',
+                accent: '#c084fc'
+            },
+            emerald: {
+                bgTop: '#07221d',
+                bgBottom: '#041014',
+                bannerStart: '#047857',
+                bannerEnd: '#0f766e',
+                cardBox: 'rgba(8, 34, 29, 0.86)',
+                border: 'rgba(52, 211, 153, 0.25)',
+                track: '#10362f',
+                accent: '#34d399'
+            },
+            crimson: {
+                bgTop: '#260c16',
+                bgBottom: '#0c060d',
+                bannerStart: '#be123c',
+                bannerEnd: '#7e22ce',
+                cardBox: 'rgba(34, 12, 22, 0.86)',
+                border: 'rgba(251, 113, 133, 0.25)',
+                track: '#381524',
+                accent: '#fb7185'
+            },
+            slate: {
+                bgTop: '#18202c',
+                bgBottom: '#0b0f17',
+                bannerStart: '#334155',
+                bannerEnd: '#1e293b',
+                cardBox: 'rgba(24, 32, 44, 0.88)',
+                border: 'rgba(148, 163, 184, 0.24)',
+                track: '#253142',
+                accent: '#94a3b8'
+            },
+            sunset: {
+                bgTop: '#29150c',
+                bgBottom: '#0d0806',
+                bannerStart: '#c2410c',
+                bannerEnd: '#d97706',
+                cardBox: 'rgba(38, 20, 12, 0.86)',
+                border: 'rgba(251, 146, 60, 0.26)',
+                track: '#3d2114',
+                accent: '#fb923c'
+            },
+            nebula: {
+                bgTop: '#081f2c',
+                bgBottom: '#040c14',
+                bannerStart: '#0e7490',
+                bannerEnd: '#2563eb',
+                cardBox: 'rgba(10, 31, 44, 0.86)',
+                border: 'rgba(34, 211, 238, 0.25)',
+                track: '#123548',
+                accent: '#22d3ee'
+            },
+            twilight: {
+                bgTop: '#290f24',
+                bgBottom: '#0e0711',
+                bannerStart: '#be185d',
+                bannerEnd: '#9333ea',
+                cardBox: 'rgba(38, 15, 34, 0.86)',
+                border: 'rgba(244, 114, 182, 0.26)',
+                track: '#3d1837',
+                accent: '#f472b6'
+            },
+            amethyst: {
+                bgTop: '#1d1035',
+                bgBottom: '#0a0614',
+                bannerStart: '#7e22ce',
+                bannerEnd: '#4f46e5',
+                cardBox: 'rgba(28, 16, 52, 0.86)',
+                border: 'rgba(167, 139, 250, 0.26)',
+                track: '#2d1a52',
+                accent: '#a78bfa'
+            },
+            glacial: {
+                bgTop: '#0c2233',
+                bgBottom: '#050e17',
+                bannerStart: '#0284c7',
+                bannerEnd: '#0d9488',
+                cardBox: 'rgba(12, 34, 51, 0.86)',
+                border: 'rgba(125, 211, 252, 0.25)',
+                track: '#15364f',
+                accent: '#7dd3fc'
+            }
+        };
+
+        // Initial sample characters with relationship positions
+        const DEFAULT_CHARACTERS = [
+            {
+                id: 'char-kael',
+                name: 'Kaelen Vance',
+                role: 'Explorador Astral',
+                position: 'Confidente Principal',
+                bio: 'Mantiene la calma bajo presión extrema, aunque guarda una profunda nostalgia por su mundo natal.',
+                avatar: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=400&q=80',
+                stats: [
+                    { id: 's1', name: 'Alegría', value: 65, colorIndex: 0 },
+                    { id: 's2', name: 'Serenidad', value: 85, colorIndex: 1 },
+                    { id: 's3', name: 'Ira', value: 20, colorIndex: 2 },
+                    { id: 's4', name: 'Curiosidad', value: 92, colorIndex: 4 }
+                ]
+            },
+            {
+                id: 'char-lyra',
+                name: 'Lyra Solis',
+                role: 'Alquimista Ígnea',
+                position: 'Rival y Aliada Cercana',
+                bio: 'Impulsiva, apasionada y tremendamente leal a su gremio. Sus emociones alimentan su magia.',
+                avatar: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=400&q=80',
+                stats: [
+                    { id: 's5', name: 'Euforia', value: 88, colorIndex: 5 },
+                    { id: 's6', name: 'Furia', value: 74, colorIndex: 2 },
+                    { id: 's7', name: 'Empatía', value: 80, colorIndex: 3 },
+                    { id: 's8', name: 'Miedo', value: 15, colorIndex: 1 }
+                ]
+            }
+        ];
+
+        // Storage keys
+        const GUEST_STORAGE_KEY = 'character_emotion_studio_v1';
+        const ACCOUNTS_STORAGE_KEY = 'character_emotion_studio_accounts_v1';
+        const ACTIVE_USER_KEY = 'character_emotion_studio_active_user_v1';
+        const AUTOSAVE_PREF_KEY = 'character_emotion_studio_autosave_v1';
+
+        // Application state
+        let characters = [];
+        let activeCharacterId = null;
+        let isPreviewMode = false;
+        let sharedCharacter = null;
+        let pendingDeleteId = null;
+        let currentUsername = null;
+        let autoSaveEnabled = true;
+        let authMode = 'login';
+        let saveTimeout = null;
+
+        let cardExportOptions = {
+            theme: 'cosmic',
+            crop: 'center',
+            shape: 'rounded',
+            showPosition: true,
+            showBio: true,
+            showStats: true
+        };
+
+        // --- PERSISTENCE & MULTI-ACCOUNT HELPERS ---
+
+        function getAccountsMap() {
+            try {
+                const raw = localStorage.getItem(ACCOUNTS_STORAGE_KEY);
+                const parsed = raw ? JSON.parse(raw) : {};
+                return parsed && typeof parsed === 'object' ? parsed : {};
+            } catch (e) {
+                return {};
+            }
+        }
+
+        function saveAccountsMap(accounts) {
+            try {
+                localStorage.setItem(ACCOUNTS_STORAGE_KEY, JSON.stringify(accounts));
+            } catch (e) {
+                console.warn('No se pudo guardar el mapa de cuentas:', e);
+            }
+        }
+
+        function normalizeCharacterRecord(item, idx) {
+            return {
+                id: item && item.id ? String(item.id) : `char-${Date.now()}-${idx}`,
+                name: item && typeof item.name === 'string' ? item.name : `Personaje #${idx + 1}`,
+                role: item && typeof item.role === 'string' ? item.role : 'Aventurero',
+                position: item && typeof item.position === 'string' ? item.position : '',
+                bio: item && typeof item.bio === 'string' ? item.bio : '',
+                avatar: item && typeof item.avatar === 'string' && item.avatar.trim()
+                    ? item.avatar
+                    : getFallbackAvatar(item && item.name ? item.name : `P${idx + 1}`),
+                stats: Array.isArray(item && item.stats)
+                    ? item.stats.map((st, sIdx) => ({
+                        id: st && st.id ? String(st.id) : `st-${idx}-${sIdx}`,
+                        name: st && typeof st.name === 'string' ? st.name : 'Emoción',
+                        value: Math.max(0, Math.min(100, Number(st && st.value) || 0)),
+                        colorIndex: Number.isFinite(Number(st && st.colorIndex)) ? Number(st.colorIndex) : sIdx
+                    }))
+                    : []
+            };
+        }
+
+        function loadCharactersForCurrentSession() {
+            try {
+                if (currentUsername) {
+                    const accounts = getAccountsMap();
+                    if (accounts[currentUsername] && Array.isArray(accounts[currentUsername].characters)) {
+                        return accounts[currentUsername].characters.map(normalizeCharacterRecord);
+                    }
+                    return JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+                }
+
+                const savedGuest = localStorage.getItem(GUEST_STORAGE_KEY);
+                if (savedGuest !== null) {
+                    const parsed = JSON.parse(savedGuest);
+                    if (Array.isArray(parsed)) {
+                        return parsed.map(normalizeCharacterRecord);
+                    }
+                }
+            } catch (e) {
+                console.warn('Error cargando personajes guardados:', e);
+            }
+            return JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+        }
+
+        function persistNow(silent) {
+            try {
+                const snapshot = JSON.parse(JSON.stringify(characters));
+                if (currentUsername) {
+                    const accounts = getAccountsMap();
+                    if (!accounts[currentUsername]) {
+                        accounts[currentUsername] = { password: '', characters: snapshot, createdAt: new Date().toISOString() };
+                    } else {
+                        accounts[currentUsername].characters = snapshot;
+                    }
+                    saveAccountsMap(accounts);
+                } else {
+                    localStorage.setItem(GUEST_STORAGE_KEY, JSON.stringify(snapshot));
+                }
+
+                if (!silent) {
+                    showSaveIndicator();
+                }
+            } catch (e) {
+                console.warn('Error al guardar en localStorage:', e);
+            }
+        }
+
+        function saveToStorage() {
+            if (!autoSaveEnabled) return;
+            clearTimeout(saveTimeout);
+            saveTimeout = setTimeout(() => {
+                persistNow(false);
+            }, 180);
+        }
+
+        function showSaveIndicator() {
+            const el = document.getElementById('save-indicator');
+            if (!el) return;
+            el.classList.remove('opacity-0');
+            el.classList.add('opacity-100');
+            clearTimeout(el._hideTimer);
+            el._hideTimer = setTimeout(() => {
+                el.classList.remove('opacity-100');
+                el.classList.add('opacity-0');
+            }, 1500);
+        }
+
+        function updateAccountHeaderUI() {
+            const labelEl = document.getElementById('account-btn-label');
+            const dotEl = document.getElementById('account-dot');
+            if (!labelEl || !dotEl) return;
+
+            if (currentUsername) {
+                labelEl.textContent = currentUsername;
+                dotEl.className = 'w-2 h-2 rounded-full bg-emerald-400 shrink-0';
+            } else {
+                labelEl.textContent = 'Invitado';
+                dotEl.className = 'w-2 h-2 rounded-full bg-amber-400 shrink-0';
+            }
+        }
+
+        // --- SHAREABLE URL (#share=...) ---
+
+        function encodeSharePayload(payload) {
+            const jsonStr = JSON.stringify(payload);
+            const bytes = new TextEncoder().encode(jsonStr);
+            let binStr = '';
+            for (let i = 0; i < bytes.length; i++) {
+                binStr += String.fromCharCode(bytes[i]);
+            }
+            return btoa(binStr).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+        }
+
+        function decodeSharePayload(hashPart) {
+            if (!hashPart || !hashPart.startsWith('#share=')) return null;
+            const b64Url = hashPart.slice(7);
+            let b64 = b64Url.replace(/-/g, '+').replace(/_/g, '/');
+            while (b64.length % 4) b64 += '=';
+            const binStr = atob(b64);
+            const bytes = new Uint8Array(binStr.length);
+            for (let i = 0; i < binStr.length; i++) {
+                bytes[i] = binStr.charCodeAt(i);
+            }
+            const jsonStr = new TextDecoder().decode(bytes);
+            return JSON.parse(jsonStr);
+        }
+
+        function checkSharedHashOnLoad() {
+            try {
+                const decoded = decodeSharePayload(window.location.hash || '');
+                if (decoded && typeof decoded === 'object' && decoded.name) {
+                    sharedCharacter = normalizeCharacterRecord(decoded, 0);
+                    isPreviewMode = true;
+                    return true;
+                }
+            } catch (e) {
+                console.warn('Enlace compartido inválido:', e);
+            }
+            sharedCharacter = null;
+            return false;
+        }
+
+        function exitSharedLinkToEditor() {
+            sharedCharacter = null;
+            isPreviewMode = false;
+            try {
+                history.replaceState(null, '', window.location.pathname + window.location.search);
+            } catch (e) {
+                window.location.hash = '';
+            }
+            if (!activeCharacterId && characters.length > 0) {
+                activeCharacterId = characters[0].id;
+            }
+            renderAll();
+        }
+
+        // --- INITIALIZATION ---
+
+        function init() {
+            try {
+                const savedAuto = localStorage.getItem(AUTOSAVE_PREF_KEY);
+                if (savedAuto !== null) {
+                    autoSaveEnabled = savedAuto === 'true';
+                }
+                const savedUser = localStorage.getItem(ACTIVE_USER_KEY);
+                const accounts = getAccountsMap();
+                if (savedUser && accounts[savedUser]) {
+                    currentUsername = savedUser;
+                }
+            } catch (e) {}
+
+            characters = loadCharactersForCurrentSession();
+            if (characters.length > 0) {
+                activeCharacterId = characters[0].id;
+            }
+
+            updateAccountHeaderUI();
+            checkSharedHashOnLoad();
+            renderAll();
+        }
+
+        function getActiveCharacter() {
+            if (sharedCharacter) return sharedCharacter;
+            return characters.find(c => c.id === activeCharacterId) || characters[0] || null;
+        }
+
+        function getCurrentTargetCharacter() {
+            return sharedCharacter || getActiveCharacter();
+        }
+
+        function togglePreviewMode() {
+            if (sharedCharacter) return;
+            if (characters.length === 0) return;
+            isPreviewMode = !isPreviewMode;
+            renderAll();
+        }
+
+        function resetToDefaults() {
+            sharedCharacter = null;
+            isPreviewMode = false;
+            characters = JSON.parse(JSON.stringify(DEFAULT_CHARACTERS));
+            activeCharacterId = characters[0].id;
+            persistNow(false);
+            renderAll();
+        }
+
+        // --- RENDERING ---
+
+        function renderAll() {
+            const isSharedView = Boolean(sharedCharacter);
+            const char = getActiveCharacter();
+
+            const carouselSection = document.getElementById('carousel-section');
+            const editorContainer = document.getElementById('editor-container');
+            const previewContainer = document.getElementById('preview-container');
+            const emptyState = document.getElementById('empty-state');
+            const sharedBanner = document.getElementById('shared-link-banner');
+            const toggleBtn = document.getElementById('toggle-preview-btn');
+            const toggleLabel = document.getElementById('toggle-preview-label');
+            const newCharBtn = document.getElementById('new-char-btn');
+
+            if (isSharedView) {
+                sharedBanner.classList.remove('hidden');
+                carouselSection.classList.add('hidden');
+                editorContainer.classList.add('hidden');
+                emptyState.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                toggleBtn.classList.add('hidden');
+                newCharBtn.classList.add('hidden');
+                renderFinalCard(sharedCharacter, true);
+                return;
+            } else {
+                sharedBanner.classList.add('hidden');
+                toggleBtn.classList.remove('hidden');
+                newCharBtn.classList.remove('hidden');
+            }
+
+            renderCharacterTabs();
+
+            if (!char || characters.length === 0) {
+                carouselSection.classList.add('hidden');
+                editorContainer.classList.add('hidden');
+                previewContainer.classList.add('hidden');
+                emptyState.classList.remove('hidden');
+                emptyState.classList.add('flex');
+                toggleLabel.textContent = 'Pantalla Final';
+                return;
+            }
+
+            carouselSection.classList.remove('hidden');
+            emptyState.classList.add('hidden');
+            emptyState.classList.remove('flex');
+
+            if (isPreviewMode) {
+                editorContainer.classList.add('hidden');
+                previewContainer.classList.remove('hidden');
+                toggleLabel.textContent = 'Volver a Editar';
+                renderFinalCard(char, false);
+            } else {
+                previewContainer.classList.add('hidden');
+                editorContainer.classList.remove('hidden');
+                toggleLabel.textContent = 'Pantalla Final';
+                renderEditor(char);
+            }
+        }
+
+        function renderCharacterTabs() {
+            const tabsContainer = document.getElementById('character-tabs');
+            const countEl = document.getElementById('char-count');
+            countEl.textContent = characters.length;
+
+            tabsContainer.innerHTML = characters.map(char => {
+                const isActive = char.id === activeCharacterId;
+                return `
+                    <button onclick="selectCharacter('${char.id}')" 
+                        class="group flex items-center gap-3 px-3.5 py-2.5 rounded-2xl border text-left shrink-0 transition-all ${
+                            isActive 
+                                ? 'bg-indigo-600/15 border-indigo-500 text-white shadow-md shadow-indigo-500/10' 
+                                : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 text-slate-300 hover:text-white'
+                        }">
+                        <img src="${char.avatar}" 
+                             onerror="this.src='${getFallbackAvatar(char.name)}'"
+                             alt="${escapeHtml(char.name)}" 
+                             class="w-9 h-9 rounded-xl object-cover bg-slate-800 shrink-0 border border-white/10">
+                        <div class="min-w-0">
+                            <div class="text-sm font-semibold truncate max-w-[140px]">${escapeHtml(char.name || 'Sin nombre')}</div>
+                            <div class="text-[11px] ${isActive ? 'text-indigo-300' : 'text-slate-400'} truncate max-w-[140px]">${escapeHtml(char.role || 'Personaje')}</div>
+                        </div>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderEditor(char) {
+            const editorContainer = document.getElementById('editor-container');
+
+            editorContainer.innerHTML = `
+                <!-- LEFT COLUMN: Identidad Visual -->
+                <div class="lg:col-span-5 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+                    <div class="flex items-center justify-between mb-5">
+                        <h2 class="text-lg font-bold text-white">Identidad Visual</h2>
+                        <span class="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-400 font-medium">Ficha</span>
+                    </div>
+
+                    <!-- Portrait & Image Upload/URL Controls -->
+                    <div class="flex flex-col sm:flex-row items-center gap-5 mb-6">
+                        <div class="relative group shrink-0">
+                            <img id="char-avatar-preview" 
+                                 src="${char.avatar}" 
+                                 onerror="this.src='${getFallbackAvatar(char.name)}'"
+                                 alt="${escapeHtml(char.name)}" 
+                                 class="w-28 h-28 rounded-2xl object-cover bg-slate-800 border-2 border-slate-700 shadow-lg">
+                            <label title="Subir foto desde dispositivo" class="absolute inset-0 bg-slate-950/65 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center rounded-2xl cursor-pointer transition-opacity text-xs font-medium text-white">
+                                <svg class="w-5 h-5 mb-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5"/></svg>
+                                <span>Subir</span>
+                                <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                            </label>
+                        </div>
+
+                        <div class="flex-1 w-full space-y-2.5">
+                            <label class="block text-xs font-medium text-slate-400">Retrato del personaje</label>
+                            <div class="flex flex-wrap gap-2">
+                                <label class="cursor-pointer bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-xl border border-slate-700 transition-colors">
+                                    <span>Subir archivo</span>
+                                    <input type="file" accept="image/*" class="hidden" onchange="handleImageUpload(event)">
+                                </label>
+                                <button type="button" onclick="openUrlModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium px-3 py-2 rounded-xl border border-slate-700 transition-colors">
+                                    Usar URL
+                                </button>
+                            </div>
+                            <p class="text-[11px] text-slate-500 leading-snug">Formatos JPG, PNG o WEBP. También admite enlace directo.</p>
+                        </div>
+                    </div>
+
+                    <!-- Identity Fields -->
+                    <div class="space-y-4">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Nombre del personaje</label>
+                            <input type="text" 
+                                   value="${escapeHtml(char.name)}" 
+                                   oninput="updateCharacterField('name', this.value)"
+                                   placeholder="Ej. Elena Rostova"
+                                   class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm font-semibold text-white outline-none transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Título / Arquetipo</label>
+                            <input type="text" 
+                                   value="${escapeHtml(char.role)}" 
+                                   oninput="updateCharacterField('role', this.value)"
+                                   placeholder="Ej. Guardiana del Alba"
+                                   class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 outline-none transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Posición actual</label>
+                            <input type="text" 
+                                   value="${escapeHtml(char.position || '')}" 
+                                   oninput="updateCharacterField('position', this.value)"
+                                   placeholder="Ej. Pareja / Confidente, Rival cercano, Compañero..."
+                                   class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-200 outline-none transition-colors">
+                        </div>
+
+                        <div>
+                            <label class="block text-xs font-medium text-slate-400 mb-1.5">Notas de Personalidad / Descripción</label>
+                            <textarea rows="4" 
+                                      oninput="updateCharacterField('bio', this.value)"
+                                      placeholder="Describe su historia, vínculo o temperamento..."
+                                      class="w-full bg-slate-950/90 border border-slate-800 focus:border-indigo-500 rounded-xl px-4 py-2.5 text-sm text-slate-300 outline-none transition-colors resize-y">${escapeHtml(char.bio)}</textarea>
+                        </div>
+                    </div>
+
+                    <!-- Footer Actions -->
+                    <div class="mt-6 pt-5 border-t border-slate-800/80 flex flex-wrap items-center justify-between gap-2">
+                        <button onclick="openShareModal()" class="text-xs font-medium text-emerald-400 hover:text-emerald-300 hover:bg-emerald-500/10 px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                            <span>Compartir Tarjeta</span>
+                        </button>
+                        <button onclick="openDeleteModal('${char.id}')" class="text-xs font-medium text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 px-3 py-2 rounded-xl flex items-center gap-1.5 transition-colors">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M14.74 9l-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 01-2.244 2.077H8.084a2.25 2.25 0 01-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 00-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 013.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 00-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 00-7.5 0"/></svg>
+                            <span>Eliminar Personaje</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- RIGHT COLUMN: Estadísticas y Emociones -->
+                <div class="lg:col-span-7 bg-slate-900 border border-slate-800 rounded-3xl p-6 shadow-xl">
+                    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+                        <div>
+                            <h2 class="text-lg font-bold text-white">Estadísticas y Emociones</h2>
+                            <p class="text-xs text-slate-400">Edita los nombres, colores y porcentajes o añade nuevas barras.</p>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <button onclick="togglePreviewMode()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-200 text-xs font-semibold px-3 py-2 rounded-xl transition-colors">
+                                Pantalla Final
+                            </button>
+                            <button onclick="addStat()" class="bg-indigo-600/20 hover:bg-indigo-600/30 text-indigo-300 border border-indigo-500/30 text-xs font-semibold px-3.5 py-2 rounded-xl flex items-center gap-1.5 transition-colors">
+                                <span>+ Añadir Emoción</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="stats-list" class="space-y-4">
+                        ${char.stats.length === 0 ? `
+                            <div class="text-center py-12 px-4 bg-slate-950/60 border border-dashed border-slate-800 rounded-2xl">
+                                <p class="text-sm text-slate-400 mb-3">Este personaje aún no tiene emociones registradas.</p>
+                                <button onclick="addStat()" class="text-xs font-semibold text-indigo-400 hover:text-indigo-300">+ Añadir primera emoción</button>
+                            </div>
+                        ` : char.stats.map(stat => {
+                            const color = STAT_COLORS[stat.colorIndex % STAT_COLORS.length];
+                            return `
+                                <div class="bg-slate-950/75 border border-slate-800/90 hover:border-slate-700 rounded-2xl p-4 transition-all">
+                                    <div class="flex items-center gap-3 mb-3">
+                                        <button type="button" onclick="cycleStatColor('${stat.id}')" 
+                                                title="Cambiar color (${color.name})"
+                                                class="w-7 h-7 rounded-lg ${color.bg} shrink-0 shadow-md hover:scale-105 transition-transform flex items-center justify-center">
+                                        </button>
+
+                                        <input type="text" 
+                                               value="${escapeHtml(stat.name)}" 
+                                               oninput="updateStatName('${stat.id}', this.value)"
+                                               placeholder="Nombre de emoción..."
+                                               class="flex-1 bg-transparent border-b border-transparent hover:border-slate-700 focus:border-indigo-500 px-1 py-0.5 text-sm sm:text-base font-semibold text-white outline-none transition-colors">
+
+                                        <span id="stat-val-${stat.id}" class="text-sm font-bold ${color.text} w-12 text-right tabular-nums">
+                                            ${stat.value}%
+                                        </span>
+
+                                        <button type="button" onclick="deleteStat('${stat.id}')" 
+                                                title="Eliminar emoción"
+                                                class="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors">
+                                            <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/></svg>
+                                        </button>
+                                    </div>
+
+                                    <div class="relative flex items-center">
+                                        <div class="w-full h-2.5 bg-slate-800 rounded-full overflow-hidden pointer-events-none">
+                                            <div id="stat-bar-${stat.id}" class="h-full ${color.bg} rounded-full transition-all duration-75" style="width: ${stat.value}%"></div>
+                                        </div>
+                                        <input type="range" 
+                                               min="0" 
+                                               max="100" 
+                                               value="${stat.value}" 
+                                               oninput="updateStatValue('${stat.id}', this.value)"
+                                               class="absolute inset-0 w-full h-full opacity-0 hover:opacity-100 focus:opacity-100 transition-opacity">
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+            `;
+        }
+
+        function renderFinalCard(char, isSharedView) {
+            const previewContainer = document.getElementById('preview-container');
+
+            let dominantStat = { name: 'Neutral', value: 0, colorIndex: 0 };
+            if (char.stats && char.stats.length > 0) {
+                dominantStat = char.stats.reduce((prev, curr) => (prev.value > curr.value) ? prev : curr);
+            }
+            const domColor = STAT_COLORS[dominantStat.colorIndex % STAT_COLORS.length];
+
+            const bioText = (char.bio || '').trim();
+            const positionText = (char.position || '').trim();
+            const bioLen = bioText.length;
+            const bioSizeClass = bioLen > 450
+                ? 'text-xs sm:text-sm leading-relaxed'
+                : bioLen > 220
+                    ? 'text-sm leading-relaxed'
+                    : 'text-sm sm:text-base leading-relaxed';
+
+            previewContainer.innerHTML = `
+                <div class="max-w-3xl mx-auto">
+                    <div class="bg-gradient-to-b from-slate-900 to-slate-950 border border-slate-800 rounded-3xl overflow-hidden shadow-2xl">
+                        <div class="h-28 bg-gradient-to-r from-indigo-900/70 via-purple-900/60 to-slate-900 border-b border-slate-800/80 relative px-6 flex items-center justify-end">
+                            <div class="bg-slate-950/75 backdrop-blur-md border border-white/10 px-3.5 py-1.5 rounded-full flex items-center gap-2">
+                                <span class="w-2.5 h-2.5 rounded-full ${domColor.bg}"></span>
+                                <span class="text-xs text-slate-300">Emoción dominante: <strong class="${domColor.text}">${escapeHtml(dominantStat.name)} (${dominantStat.value}%)</strong></span>
+                            </div>
+                        </div>
+
+                        <div class="px-6 sm:px-10 pb-10">
+                            <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-6 -mt-14 mb-8 relative z-10">
+                                <div class="flex flex-col sm:flex-row sm:items-end gap-5">
+                                    <img src="${char.avatar}" 
+                                         onerror="this.src='${getFallbackAvatar(char.name)}'"
+                                         alt="${escapeHtml(char.name)}" 
+                                         class="w-28 h-28 sm:w-36 sm:h-36 rounded-3xl object-cover bg-slate-900 border-4 border-slate-950 shadow-2xl">
+                                    <div class="pt-2">
+                                        <span class="inline-block px-3 py-1 rounded-full bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs font-semibold mb-2">
+                                            ${escapeHtml(char.role || 'Personaje')}
+                                        </span>
+                                        <h2 class="text-2xl sm:text-4xl font-extrabold text-white tracking-tight break-words">
+                                            ${escapeHtml(char.name || 'Sin nombre')}
+                                        </h2>
+                                        ${positionText ? `
+                                            <div class="mt-2 inline-flex items-center gap-1.5 text-xs sm:text-sm text-slate-300 bg-slate-900/90 border border-slate-800 px-3 py-1 rounded-xl">
+                                                <span class="w-2 h-2 rounded-full bg-indigo-400 shrink-0"></span>
+                                                <span class="text-slate-400">Posición actual:</span>
+                                                <span class="font-semibold text-white break-words">${escapeHtml(positionText)}</span>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+                                </div>
+
+                                <div class="flex flex-wrap items-center gap-2 shrink-0">
+                                    <button onclick="openShareModal()" class="bg-emerald-600 hover:bg-emerald-500 text-white text-xs sm:text-sm font-semibold px-4 py-2.5 rounded-xl shadow-lg shadow-emerald-600/20 flex items-center gap-2 transition-all">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"/></svg>
+                                        <span>Compartir Tarjeta</span>
+                                    </button>
+                                    ${!isSharedView ? `
+                                        <button onclick="togglePreviewMode()" class="bg-slate-800 hover:bg-slate-700 border border-slate-700 text-white text-xs sm:text-sm font-medium px-4 py-2.5 rounded-xl transition-all">
+                                            Volver a Editar
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </div>
+
+                            ${bioText ? `
+                                <div class="bg-slate-900/75 border border-slate-800 rounded-2xl p-4 sm:p-6 mb-8">
+                                    <p class="${bioSizeClass} text-slate-300 whitespace-pre-line break-words">${escapeHtml(bioText)}</p>
+                                </div>
+                            ` : ''}
+
+                            <div>
+                                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">
+                                    Perfil Emocional y Estadísticas
+                                </h3>
+
+                                ${(!char.stats || char.stats.length === 0) ? `
+                                    <p class="text-sm text-slate-500 italic">Este personaje no tiene estadísticas registradas.</p>
+                                ` : `
+                                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                        ${char.stats.map(stat => {
+                                            const color = STAT_COLORS[stat.colorIndex % STAT_COLORS.length];
+                                            return `
+                                                <div class="bg-slate-900/90 border border-slate-800 rounded-2xl p-4">
+                                                    <div class="flex items-center justify-between mb-2.5">
+                                                        <div class="flex items-center gap-2.5">
+                                                            <span class="w-3 h-3 rounded-full ${color.bg}"></span>
+                                                            <span class="font-semibold text-sm sm:text-base text-white">${escapeHtml(stat.name)}</span>
+                                                        </div>
+                                                        <span class="font-extrabold text-sm sm:text-base ${color.text} tabular-nums">${stat.value}%</span>
+                                                    </div>
+                                                    <div class="w-full h-3 bg-slate-950 rounded-full overflow-hidden border border-slate-800/80">
+                                                        <div class="h-full ${color.bg} rounded-full transition-all duration-500" style="width: ${stat.value}%"></div>
+                                                    </div>
+                                                </div>
+                                            `;
+                                        }).join('')}
+                                    </div>
+                                `}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // --- CHARACTER & STAT ACTIONS ---
+
+        function selectCharacter(id) {
+            activeCharacterId = id;
+            renderAll();
+        }
+
+        function addNewCharacter() {
+            isPreviewMode = false;
+            const newId = 'char-' + Date.now();
+            const count = characters.length + 1;
+            const newChar = {
+                id: newId,
+                name: `Personaje #${count}`,
+                role: 'Aventurero',
+                position: '',
+                bio: '',
+                avatar: getFallbackAvatar(`P${count}`),
+                stats: [
+                    { id: 'st-' + Date.now() + '-1', name: 'Alegría', value: 50, colorIndex: 0 },
+                    { id: 'st-' + Date.now() + '-2', name: 'Tristeza', value: 30, colorIndex: 1 },
+                    { id: 'st-' + Date.now() + '-3', name: 'Ira', value: 25, colorIndex: 2 },
+                    { id: 'st-' + Date.now() + '-4', name: 'Calma', value: 70, colorIndex: 3 }
+                ]
+            };
+            characters.push(newChar);
+            activeCharacterId = newId;
+            saveToStorage();
+            renderAll();
+        }
+
+        function updateCharacterField(field, value) {
+            const char = getActiveCharacter();
+            if (!char) return;
+            char[field] = value;
+            saveToStorage();
+            if (field === 'name' || field === 'role') {
+                renderCharacterTabs();
+            }
+        }
+
+        function handleImageUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const char = getActiveCharacter();
+                if (!char) return;
+                char.avatar = e.target.result;
+                saveToStorage();
+                renderAll();
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function openUrlModal() {
+            const char = getActiveCharacter();
+            if (!char) return;
+            const input = document.getElementById('image-url-input');
+            input.value = char.avatar.startsWith('data:') ? '' : char.avatar;
+            const modal = document.getElementById('url-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            input.focus();
+        }
+
+        function closeUrlModal() {
+            const modal = document.getElementById('url-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function applyImageUrl() {
+            const url = document.getElementById('image-url-input').value.trim();
+            const char = getActiveCharacter();
+            if (char && url) {
+                char.avatar = url;
+                saveToStorage();
+                renderAll();
+            }
+            closeUrlModal();
+        }
+
+        function openDeleteModal(id) {
+            const char = characters.find(c => c.id === id);
+            if (!char) return;
+            pendingDeleteId = id;
+            document.getElementById('delete-char-name').textContent = char.name || 'este personaje';
+            const modal = document.getElementById('delete-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            document.getElementById('confirm-delete-btn').onclick = function() {
+                confirmDeleteCharacter();
+            };
+        }
+
+        function closeDeleteModal() {
+            pendingDeleteId = null;
+            const modal = document.getElementById('delete-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function confirmDeleteCharacter() {
+            if (!pendingDeleteId) return;
+            characters = characters.filter(c => c.id !== pendingDeleteId);
+            if (activeCharacterId === pendingDeleteId) {
+                activeCharacterId = characters.length > 0 ? characters[0].id : null;
+            }
+            if (characters.length === 0) {
+                isPreviewMode = false;
+            }
+            saveToStorage();
+            closeDeleteModal();
+            renderAll();
+        }
+
+        function addStat() {
+            const char = getActiveCharacter();
+            if (!char) return;
+            const nextColor = char.stats.length % STAT_COLORS.length;
+            char.stats.push({
+                id: 'st-' + Date.now() + '-' + Math.random().toString(36).slice(2, 6),
+                name: 'Nueva Emoción',
+                value: 50,
+                colorIndex: nextColor
+            });
+            saveToStorage();
+            renderEditor(char);
+        }
+
+        function deleteStat(statId) {
+            const char = getActiveCharacter();
+            if (!char) return;
+            char.stats = char.stats.filter(s => s.id !== statId);
+            saveToStorage();
+            renderEditor(char);
+        }
+
+        function updateStatName(statId, name) {
+            const char = getActiveCharacter();
+            if (!char) return;
+            const stat = char.stats.find(s => s.id === statId);
+            if (!stat) return;
+            stat.name = name;
+            saveToStorage();
+        }
+
+        function updateStatValue(statId, rawValue) {
+            const char = getActiveCharacter();
+            if (!char) return;
+            const stat = char.stats.find(s => s.id === statId);
+            if (!stat) return;
+            const val = Math.max(0, Math.min(100, parseInt(rawValue, 10) || 0));
+            stat.value = val;
+
+            const valEl = document.getElementById(`stat-val-${statId}`);
+            const barEl = document.getElementById(`stat-bar-${statId}`);
+            if (valEl) valEl.textContent = `${val}%`;
+            if (barEl) barEl.style.width = `${val}%`;
+
+            saveToStorage();
+        }
+
+        function cycleStatColor(statId) {
+            const char = getActiveCharacter();
+            if (!char) return;
+            const stat = char.stats.find(s => s.id === statId);
+            if (!stat) return;
+            stat.colorIndex = (stat.colorIndex + 1) % STAT_COLORS.length;
+            saveToStorage();
+            renderEditor(char);
+        }
+
+        // --- SHARE MODAL & CUSTOMIZABLE AUTO-SIZING PNG EXPORT ---
+
+        function openShareModal() {
+            const char = getCurrentTargetCharacter();
+            if (!char) return;
+
+            document.getElementById('share-modal-subtitle').textContent =
+                `Personaje: ${char.name || 'Sin nombre'} • Ajusta paleta, encuadre y descarga en PNG`;
+
+            document.getElementById('png-theme-select').value = cardExportOptions.theme;
+            document.getElementById('png-crop-select').value = cardExportOptions.crop;
+            document.getElementById('png-shape-select').value = cardExportOptions.shape;
+            document.getElementById('png-show-position').checked = cardExportOptions.showPosition;
+            document.getElementById('png-show-bio').checked = cardExportOptions.showBio;
+            document.getElementById('png-show-stats').checked = cardExportOptions.showStats;
+
+            const isLocalData = typeof char.avatar === 'string' && char.avatar.startsWith('data:');
+            const noteEl = document.getElementById('share-local-img-note');
+            if (isLocalData) {
+                noteEl.classList.remove('hidden');
+            } else {
+                noteEl.classList.add('hidden');
+            }
+
+            const payload = {
+                name: char.name,
+                role: char.role,
+                position: char.position || '',
+                bio: char.bio,
+                avatar: isLocalData ? getFallbackAvatar(char.name) : char.avatar,
+                stats: char.stats || []
+            };
+            const encoded = encodeSharePayload(payload);
+            const baseUrl = window.location.href.split('#')[0];
+            document.getElementById('share-url-field').value = `${baseUrl}#share=${encoded}`;
+
+            const copyBtn = document.getElementById('copy-share-btn');
+            copyBtn.textContent = 'Copiar';
+
+            const modal = document.getElementById('share-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+
+            renderLiveShareCanvas();
+        }
+
+        function closeShareModal() {
+            const modal = document.getElementById('share-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function updateCardExportOption(key, value) {
+            cardExportOptions[key] = value;
+            renderLiveShareCanvas();
+        }
+
+        function copyShareUrl() {
+            const input = document.getElementById('share-url-field');
+            if (!input) return;
+            input.select();
+            input.setSelectionRange(0, input.value.length);
+            try {
+                document.execCommand('copy');
+            } catch (e) {}
+            const btn = document.getElementById('copy-share-btn');
+            if (btn) {
+                btn.textContent = '¡Copiado!';
+                setTimeout(() => {
+                    btn.textContent = 'Copiar';
+                }, 1800);
+            }
+        }
+
+        function loadImageForCanvas(url) {
+            return new Promise((resolve) => {
+                if (!url) return resolve(null);
+                const img = new Image();
+                img.crossOrigin = 'anonymous';
+                img.onload = () => resolve(img);
+                img.onerror = () => resolve(null);
+                img.src = url;
+            });
+        }
+
+        function wrapCanvasText(ctx, text, maxWidth) {
+            const paragraphs = String(text || '').split(/\r?\n/);
+            const lines = [];
+
+            paragraphs.forEach((para) => {
+                const words = para.split(/\s+/).filter(Boolean);
+                if (words.length === 0) {
+                    lines.push('');
+                    return;
+                }
+                let current = words[0];
+                for (let i = 1; i < words.length; i++) {
+                    const test = current + ' ' + words[i];
+                    if (ctx.measureText(test).width <= maxWidth) {
+                        current = test;
+                    } else {
+                        lines.push(current);
+                        current = words[i];
+                    }
+                }
+                if (ctx.measureText(current).width > maxWidth) {
+                    let chunk = '';
+                    for (let ch of current) {
+                        if (ctx.measureText(chunk + ch).width <= maxWidth) {
+                            chunk += ch;
+                        } else {
+                            if (chunk) lines.push(chunk);
+                            chunk = ch;
+                        }
+                    }
+                    if (chunk) lines.push(chunk);
+                } else {
+                    lines.push(current);
+                }
+            });
+
+            return lines;
+        }
+
+        function drawFramedImage(ctx, img, dx, dy, dw, dh, cropMode) {
+            const imgRatio = img.width / img.height;
+            const boxRatio = dw / dh;
+            let sx = 0, sy = 0, sw = img.width, sh = img.height;
+
+            if (imgRatio > boxRatio) {
+                sw = img.height * boxRatio;
+                sx = (img.width - sw) / 2;
+            } else if (imgRatio < boxRatio) {
+                sh = img.width / boxRatio;
+                if (cropMode === 'top') {
+                    sy = 0;
+                } else if (cropMode === 'bottom') {
+                    sy = img.height - sh;
+                } else {
+                    sy = (img.height - sh) / 2;
+                }
+            }
+
+            ctx.drawImage(img, sx, sy, sw, sh, dx, dy, dw, dh);
+        }
+
+        async function drawCharacterCardToCanvas(canvas, char) {
+            const theme = CARD_THEMES[cardExportOptions.theme] || CARD_THEMES.cosmic;
+            const width = 920;
+            const padX = 54;
+            const contentW = width - padX * 2;
+
+            const stats = cardExportOptions.showStats ? (char.stats || []) : [];
+            const rawPosition = cardExportOptions.showPosition ? (char.position || '').trim() : '';
+            const hasPosition = Boolean(rawPosition);
+            const rawBio = cardExportOptions.showBio ? (char.bio || '').trim() : '';
+            const hasBio = Boolean(rawBio);
+
+            const mCanvas = document.createElement('canvas');
+            const mCtx = mCanvas.getContext('2d');
+
+            const nameFontSize = 36;
+            mCtx.font = `800 ${nameFontSize}px Inter, sans-serif`;
+            const nameMaxW = width - (padX + 164 + padX);
+            const nameLines = wrapCanvasText(mCtx, char.name || 'Sin nombre', Math.max(240, nameMaxW));
+
+            const posFontSize = 15;
+            const posLineHeight = 22;
+            const posPrefix = 'Posición actual: ';
+            mCtx.font = `600 ${posFontSize}px Inter, sans-serif`;
+            const posLines = hasPosition ? wrapCanvasText(mCtx, posPrefix + rawPosition, Math.max(220, nameMaxW - 24)) : [];
+            const posSectionHeight = hasPosition ? (posLines.length * posLineHeight + 8) : 0;
+
+            const bioFontSize = rawBio.length > 420 ? 14 : rawBio.length > 220 ? 15 : 16;
+            const bioLineHeight = bioFontSize + 8;
+            mCtx.font = `400 ${bioFontSize}px Inter, sans-serif`;
+            const bioLines = hasBio ? wrapCanvasText(mCtx, rawBio, contentW - 36) : [];
+            const bioBoxHeight = hasBio ? (bioLines.length * bioLineHeight + 34) : 0;
+
+            const headerExtra = Math.max(0, (nameLines.length - 1) * (nameFontSize + 6)) + posSectionHeight;
+            const rowHeight = 58;
+            const statsSectionHeight = cardExportOptions.showStats
+                ? (56 + Math.max(1, stats.length) * rowHeight)
+                : 12;
+
+            const height = 248 + headerExtra + (hasBio ? bioBoxHeight + 26 : 12) + statsSectionHeight + 28;
+
+            canvas.width = width;
+            canvas.height = height;
+
+            const badgeEl = document.getElementById('png-dimensions-badge');
+            if (badgeEl) {
+                badgeEl.textContent = `${width} × ${height} px`;
+            }
+
+            const ctx = canvas.getContext('2d');
+
+            // Background gradient
+            const bgGrad = ctx.createLinearGradient(0, 0, 0, height);
+            bgGrad.addColorStop(0, theme.bgTop);
+            bgGrad.addColorStop(1, theme.bgBottom);
+            ctx.fillStyle = bgGrad;
+            ctx.fillRect(0, 0, width, height);
+
+            // Top decorative banner
+            const bannerGrad = ctx.createLinearGradient(0, 0, width, 130);
+            bannerGrad.addColorStop(0, theme.bannerStart);
+            bannerGrad.addColorStop(1, theme.bannerEnd);
+            ctx.fillStyle = bannerGrad;
+            ctx.fillRect(0, 0, width, 126);
+
+            // Dominant emotion pill
+            let dominantStat = { name: 'Neutral', value: 0, colorIndex: 0 };
+            if (char.stats && char.stats.length > 0) {
+                dominantStat = char.stats.reduce((prev, curr) => (prev.value > curr.value) ? prev : curr);
+            }
+            const domColor = STAT_COLORS[dominantStat.colorIndex % STAT_COLORS.length];
+
+            ctx.font = '600 14px Inter, sans-serif';
+            const pillText = `Dominante: ${dominantStat.name} (${dominantStat.value}%)`;
+            const pillW = ctx.measureText(pillText).width + 44;
+            const pillX = width - padX - pillW;
+            const pillY = 44;
+
+            ctx.fillStyle = 'rgba(2, 6, 23, 0.72)';
+            drawRoundedRect(ctx, pillX, pillY, pillW, 34, 17);
+            ctx.fill();
+
+            ctx.fillStyle = domColor.hex;
+            ctx.beginPath();
+            ctx.arc(pillX + 18, pillY + 17, 5, 0, Math.PI * 2);
+            ctx.fill();
+
+            ctx.fillStyle = '#f8fafc';
+            ctx.fillText(pillText, pillX + 30, pillY + 22);
+
+            // Portrait box
+            const avatarSize = 140;
+            const avatarX = padX;
+            const avatarY = 66;
+            const loadedImg = await loadImageForCanvas(char.avatar);
+
+            ctx.save();
+            if (cardExportOptions.shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                ctx.clip();
+            } else {
+                drawRoundedRect(ctx, avatarX, avatarY, avatarSize, avatarSize, 26);
+                ctx.clip();
+            }
+
+            if (loadedImg) {
+                drawFramedImage(ctx, loadedImg, avatarX, avatarY, avatarSize, avatarSize, cardExportOptions.crop);
+            } else {
+                ctx.fillStyle = '#1e293b';
+                ctx.fillRect(avatarX, avatarY, avatarSize, avatarSize);
+                ctx.fillStyle = '#ffffff';
+                ctx.font = '800 48px Inter, sans-serif';
+                const initial = (char.name || '?').trim().charAt(0).toUpperCase() || '?';
+                const initW = ctx.measureText(initial).width;
+                ctx.fillText(initial, avatarX + (avatarSize - initW) / 2, avatarY + 92);
+            }
+            ctx.restore();
+
+            // Portrait border
+            ctx.strokeStyle = theme.bgTop;
+            ctx.lineWidth = 5;
+            if (cardExportOptions.shape === 'circle') {
+                ctx.beginPath();
+                ctx.arc(avatarX + avatarSize / 2, avatarY + avatarSize / 2, avatarSize / 2, 0, Math.PI * 2);
+                ctx.stroke();
+            } else {
+                drawRoundedRect(ctx, avatarX, avatarY, avatarSize, avatarSize, 26);
+                ctx.stroke();
+            }
+
+            // Role badge & character name
+            const textStartX = avatarX + avatarSize + 24;
+            const roleLabel = (char.role || 'Personaje').toUpperCase();
+            ctx.font = '700 12px Inter, sans-serif';
+            const roleW = ctx.measureText(roleLabel).width + 24;
+            ctx.fillStyle = 'rgba(99, 102, 241, 0.22)';
+            drawRoundedRect(ctx, textStartX, 112, roleW, 24, 12);
+            ctx.fill();
+
+            ctx.fillStyle = '#c7d2fe';
+            ctx.fillText(roleLabel, textStartX + 12, 128);
+
+            ctx.fillStyle = '#ffffff';
+            ctx.font = `800 ${nameFontSize}px Inter, sans-serif`;
+            let nameY = 172;
+            nameLines.forEach((line) => {
+                ctx.fillText(line, textStartX, nameY);
+                nameY += nameFontSize + 6;
+            });
+
+            if (hasPosition) {
+                let posY = nameY + 2;
+                ctx.save();
+                ctx.strokeStyle = theme.accent;
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.moveTo(textStartX + 4, posY - 12);
+                ctx.lineTo(textStartX + 4, posY + 2);
+                ctx.stroke();
+                ctx.restore();
+
+                ctx.fillStyle = '#e2e8f0';
+                ctx.font = `600 ${posFontSize}px Inter, sans-serif`;
+                posLines.forEach((line) => {
+                    ctx.fillText(line, textStartX + 14, posY);
+                    posY += posLineHeight;
+                });
+                nameY = posY + 4;
+            }
+
+            let curY = Math.max(228, nameY + 12);
+
+            // Bio / Description box with dynamic height
+            if (hasBio) {
+                ctx.fillStyle = theme.cardBox;
+                drawRoundedRect(ctx, padX, curY, contentW, bioBoxHeight, 18);
+                ctx.fill();
+
+                ctx.strokeStyle = theme.border;
+                ctx.lineWidth = 1.5;
+                drawRoundedRect(ctx, padX, curY, contentW, bioBoxHeight, 18);
+                ctx.stroke();
+
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = `400 ${bioFontSize}px Inter, sans-serif`;
+                let lineY = curY + 26;
+                bioLines.forEach((line) => {
+                    ctx.fillText(line, padX + 18, lineY);
+                    lineY += bioLineHeight;
+                });
+
+                curY += bioBoxHeight + 26;
+            }
+
+            // Emotions / Stats bars
+            if (cardExportOptions.showStats) {
+                ctx.strokeStyle = theme.border;
+                ctx.lineWidth = 1.5;
+                ctx.beginPath();
+                ctx.moveTo(padX, curY);
+                ctx.lineTo(width - padX, curY);
+                ctx.stroke();
+                curY += 32;
+
+                ctx.fillStyle = '#94a3b8';
+                ctx.font = '700 13px Inter, sans-serif';
+                ctx.fillText('PERFIL EMOCIONAL Y ESTADÍSTICAS', padX, curY);
+                curY += 28;
+
+                if (stats.length === 0) {
+                    ctx.fillStyle = '#64748b';
+                    ctx.font = '400 15px Inter, sans-serif';
+                    ctx.fillText('Sin estadísticas registradas.', padX, curY + 10);
+                } else {
+                    stats.forEach(stat => {
+                        const color = STAT_COLORS[stat.colorIndex % STAT_COLORS.length];
+
+                        ctx.fillStyle = '#f8fafc';
+                        ctx.font = '600 17px Inter, sans-serif';
+                        ctx.fillText(stat.name, padX, curY);
+
+                        ctx.fillStyle = color.hex;
+                        ctx.font = '700 17px Inter, sans-serif';
+                        const pct = `${stat.value}%`;
+                        const pctW = ctx.measureText(pct).width;
+                        ctx.fillText(pct, width - padX - pctW, curY);
+
+                        const barY = curY + 10;
+                        ctx.fillStyle = theme.track;
+                        drawRoundedRect(ctx, padX, barY, contentW, 13, 6.5);
+                        ctx.fill();
+
+                        if (stat.value > 0) {
+                            const fillW = Math.max(13, (contentW * stat.value) / 100);
+                            ctx.fillStyle = color.hex;
+                            drawRoundedRect(ctx, padX, barY, fillW, 13, 6.5);
+                            ctx.fill();
+                        }
+
+                        curY += rowHeight;
+                    });
+                }
+            }
+        }
+
+        async function renderLiveShareCanvas() {
+            const char = getCurrentTargetCharacter();
+            const liveCanvas = document.getElementById('share-live-canvas');
+            if (!char || !liveCanvas) return;
+            await drawCharacterCardToCanvas(liveCanvas, char);
+        }
+
+        async function downloadCharacterPNG() {
+            const char = getCurrentTargetCharacter();
+            if (!char) return;
+            const exportCanvas = document.createElement('canvas');
+            await drawCharacterCardToCanvas(exportCanvas, char);
+
+            const link = document.createElement('a');
+            const slug = (char.name || 'personaje').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            link.download = `tarjeta-${slug}.png`;
+            link.href = exportCanvas.toDataURL('image/png');
+            link.click();
+        }
+
+        function drawRoundedRect(ctx, x, y, w, h, r) {
+            ctx.beginPath();
+            ctx.moveTo(x + r, y);
+            ctx.lineTo(x + w - r, y);
+            ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+            ctx.lineTo(x + w, y + h - r);
+            ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
+            ctx.lineTo(x + r, y + h);
+            ctx.quadraticCurveTo(x, y + h, x, y + h - r);
+            ctx.lineTo(x, y + r);
+            ctx.quadraticCurveTo(x, y, x + r, y);
+            ctx.closePath();
+        }
+
+        // --- ACCOUNT MODAL & BACKUP HANDLERS ---
+
+        function openAccountModal() {
+            refreshAccountModalUI();
+            const modal = document.getElementById('account-modal');
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeAccountModal() {
+            const modal = document.getElementById('account-modal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function toggleAutoSave(enabled) {
+            autoSaveEnabled = Boolean(enabled);
+            try {
+                localStorage.setItem(AUTOSAVE_PREF_KEY, String(autoSaveEnabled));
+            } catch (e) {}
+            if (autoSaveEnabled) {
+                persistNow(false);
+            }
+        }
+
+        function switchAuthTab(mode) {
+            authMode = mode;
+            const loginBtn = document.getElementById('tab-login-btn');
+            const regBtn = document.getElementById('tab-register-btn');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const seedWrap = document.getElementById('register-seed-wrap');
+            const feedback = document.getElementById('auth-feedback');
+            feedback.classList.add('hidden');
+
+            if (mode === 'login') {
+                loginBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition-colors';
+                regBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-400 hover:text-white transition-colors';
+                submitBtn.textContent = 'Entrar a mi Cuenta';
+                seedWrap.classList.add('hidden');
+            } else {
+                regBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold bg-indigo-600 text-white transition-colors';
+                loginBtn.className = 'flex-1 py-2 rounded-xl text-xs font-semibold bg-slate-900 text-slate-400 hover:text-white transition-colors';
+                submitBtn.textContent = 'Crear Cuenta';
+                seedWrap.classList.remove('hidden');
+            }
+        }
+
+        function showAuthFeedback(msg, isError) {
+            const el = document.getElementById('auth-feedback');
+            el.textContent = msg;
+            el.classList.remove('hidden', 'bg-rose-500/15', 'text-rose-300', 'border-rose-500/30', 'bg-emerald-500/15', 'text-emerald-300', 'border-emerald-500/30');
+            if (isError) {
+                el.classList.add('bg-rose-500/15', 'text-rose-300', 'border', 'border-rose-500/30');
+            } else {
+                el.classList.add('bg-emerald-500/15', 'text-emerald-300', 'border', 'border-emerald-500/30');
+            }
+        }
+
+        function submitAccountAuth() {
+            const rawUser = (document.getElementById('auth-username').value || '').trim();
+            const password = (document.getElementById('auth-password').value || '').trim();
+
+            if (!rawUser) {
+                showAuthFeedback('Escribe un nombre de usuario.', true);
+                return;
+            }
+
+            const accounts = getAccountsMap();
+            const existingKey = Object.keys(accounts).find(k => k.toLowerCase() === rawUser.toLowerCase());
+
+            if (authMode === 'register') {
+                if (existingKey) {
+                    showAuthFeedback('Ese nombre de usuario ya existe. Cambia a "Iniciar Sesión".', true);
+                    return;
+                }
+                const seedChoice = document.getElementById('register-seed-select').value;
+                const initialChars = seedChoice === 'defaults'
+                    ? JSON.parse(JSON.stringify(DEFAULT_CHARACTERS))
+                    : JSON.parse(JSON.stringify(characters));
+
+                accounts[rawUser] = {
+                    password: password,
+                    characters: initialChars,
+                    createdAt: new Date().toISOString()
+                };
+                saveAccountsMap(accounts);
+                currentUsername = rawUser;
+                characters = initialChars;
+                activeCharacterId = characters.length > 0 ? characters[0].id : null;
+                try {
+                    localStorage.setItem(ACTIVE_USER_KEY, currentUsername);
+                } catch (e) {}
+                document.getElementById('auth-password').value = '';
+                updateAccountHeaderUI();
+                refreshAccountModalUI();
+                renderAll();
+                showAuthFeedback(`Cuenta "${rawUser}" creada con ${characters.length} personajes.`, false);
+            } else {
+                if (!existingKey) {
+                    showAuthFeedback('No existe esa cuenta en este dispositivo. Usa "Crear Cuenta".', true);
+                    return;
+                }
+                const acc = accounts[existingKey];
+                if (acc.password && acc.password !== password) {
+                    showAuthFeedback('Contraseña o PIN incorrecto.', true);
+                    return;
+                }
+                persistNow(true);
+
+                currentUsername = existingKey;
+                try {
+                    localStorage.setItem(ACTIVE_USER_KEY, currentUsername);
+                } catch (e) {}
+                characters = Array.isArray(acc.characters) ? acc.characters.map(normalizeCharacterRecord) : [];
+                activeCharacterId = characters.length > 0 ? characters[0].id : null;
+                document.getElementById('auth-password').value = '';
+                updateAccountHeaderUI();
+                refreshAccountModalUI();
+                renderAll();
+                showAuthFeedback(`Sesión iniciada como "${existingKey}".`, false);
+            }
+        }
+
+        function quickSelectSavedAccount(username) {
+            document.getElementById('auth-username').value = username;
+            switchAuthTab('login');
+            const accounts = getAccountsMap();
+            if (accounts[username] && !accounts[username].password) {
+                submitAccountAuth();
+            } else {
+                document.getElementById('auth-password').focus();
+            }
+        }
+
+        function logoutAccount() {
+            persistNow(true);
+            currentUsername = null;
+            try {
+                localStorage.removeItem(ACTIVE_USER_KEY);
+            } catch (e) {}
+            characters = loadCharactersForCurrentSession();
+            activeCharacterId = characters.length > 0 ? characters[0].id : null;
+            updateAccountHeaderUI();
+            refreshAccountModalUI();
+            renderAll();
+        }
+
+        function manualSaveProgress() {
+            persistNow(false);
+            const btn = document.getElementById('manual-save-btn');
+            if (btn) {
+                btn.textContent = '¡Guardado!';
+                setTimeout(() => {
+                    btn.textContent = 'Guardar ahora';
+                }, 1600);
+            }
+        }
+
+        function refreshAccountModalUI() {
+            const activeNameEl = document.getElementById('account-active-name');
+            const summaryEl = document.getElementById('account-char-summary');
+            const logoutRow = document.getElementById('account-logout-row');
+            const autoChk = document.getElementById('autosave-toggle');
+            const savedWrap = document.getElementById('saved-accounts-list-wrap');
+            const savedList = document.getElementById('saved-accounts-list');
+
+            if (activeNameEl) {
+                activeNameEl.textContent = currentUsername ? currentUsername : 'Invitado / Local';
+            }
+            if (summaryEl) {
+                summaryEl.textContent = `${characters.length} personaje${characters.length === 1 ? '' : 's'} guardado${characters.length === 1 ? '' : 's'}`;
+            }
+            if (autoChk) {
+                autoChk.checked = autoSaveEnabled;
+            }
+            if (logoutRow) {
+                if (currentUsername) {
+                    logoutRow.classList.remove('hidden');
+                } else {
+                    logoutRow.classList.add('hidden');
+                }
+            }
+
+            const accounts = getAccountsMap();
+            const names = Object.keys(accounts);
+            if (savedWrap && savedList) {
+                if (names.length > 0) {
+                    savedWrap.classList.remove('hidden');
+                    savedList.innerHTML = names.map(name => {
+                        const isCur = name === currentUsername;
+                        const count = Array.isArray(accounts[name].characters) ? accounts[name].characters.length : 0;
+                        return `
+                            <button type="button" onclick="quickSelectSavedAccount('${escapeHtml(name)}')" class="text-xs px-3 py-1.5 rounded-xl border transition-colors ${
+                                isCur
+                                    ? 'bg-indigo-600/20 border-indigo-500 text-indigo-200 font-semibold'
+                                    : 'bg-slate-900 border-slate-700 hover:border-slate-500 text-slate-300'
+                            }">
+                                ${escapeHtml(name)} (${count})
+                            </button>
+                        `;
+                    }).join('');
+                } else {
+                    savedWrap.classList.add('hidden');
+                }
+            }
+        }
+
+        function exportAccountBackup() {
+            const payload = {
+                app: 'Estudio de Personajes y Emociones',
+                exportedAt: new Date().toISOString(),
+                account: currentUsername || 'Invitado',
+                characters: characters
+            };
+            const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            const slug = (currentUsername || 'invitado').toLowerCase().replace(/[^a-z0-9]+/g, '-');
+            a.href = url;
+            a.download = `respaldo-personajes-${slug}.json`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        function importAccountBackup(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const parsed = JSON.parse(e.target.result);
+                    const importedList = Array.isArray(parsed) ? parsed : parsed.characters;
+                    if (!Array.isArray(importedList)) {
+                        showAuthFeedback('El archivo seleccionado no tiene un formato de personajes válido.', true);
+                        return;
+                    }
+                    characters = importedList.map(normalizeCharacterRecord);
+                    activeCharacterId = characters.length > 0 ? characters[0].id : null;
+                    persistNow(false);
+                    refreshAccountModalUI();
+                    renderAll();
+                    showAuthFeedback(`Se importaron ${characters.length} personajes correctamente.`, false);
+                } catch (err) {
+                    showAuthFeedback('No se pudo leer el archivo JSON de respaldo.', true);
+                }
+            };
+            reader.readAsText(file);
+            event.target.value = '';
+        }
+
+        // --- UTILITY HELPERS ---
+
+        function getFallbackAvatar(name) {
+            const letter = (name || '?').trim().charAt(0).toUpperCase() || '?';
+            const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="200" height="200" viewBox="0 0 200 200"><rect width="200" height="200" fill="#1e293b"/><text x="50%" y="54%" dominant-baseline="middle" text-anchor="middle" fill="#94a3b8" font-family="Inter,sans-serif" font-size="72" font-weight="700">${letter}</text></svg>`;
+            return 'data:image/svg+xml;charset=UTF-8,' + encodeURIComponent(svg);
+        }
+
+        function escapeHtml(str) {
+            return String(str || '')
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+
+        // Start immediately when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', init);
+        } else {
+            init();
+        }
+    </script>
+</body>
+</html>
+```
