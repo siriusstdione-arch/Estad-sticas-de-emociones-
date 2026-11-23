@@ -1,0 +1,3496 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Estudio de Personajes y Emociones</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Cormorant+Garamond:ital,wght@0,600;0,700;1,600&family=Dancing+Script:wght@600;700&family=EB+Garamond:ital,wght@0,600;0,700;1,600&family=Great+Vibes&family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&family=Lora:ital,wght@0,600;0,700;1,600&family=MedievalSharp&family=Orbitron:wght@600;700;800&family=Pacifico&family=Pirata+One&family=Playfair+Display:ital,wght@0,600;0,700;1,700&family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Poppins:wght@500;600;700;800&family=Quicksand:wght@600;700&family=Rajdhani:wght@600;700&family=UnifrakturMaguntia&display=swap"
+    rel="stylesheet"
+  />
+  <style>
+    :root {
+      --page-bg-start: #070913;
+      --page-bg-end: #0d1224;
+      --page-accent: #7c3aed;
+      --page-glow: rgba(124, 58, 237, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      margin: 0;
+      padding: 0;
+      min-height: 100%;
+      background: linear-gradient(160deg, var(--page-bg-start) 0%, var(--page-bg-end) 100%);
+      color: #f8fafc;
+      font-family: 'Plus Jakarta Sans', 'Inter', system-ui, -apple-system, sans-serif;
+      overflow-x: hidden;
+    }
+
+    .app-backdrop {
+      min-height: 100vh;
+      background-image:
+        radial-gradient(circle at 15% 10%, var(--page-glow), transparent 45%),
+        radial-gradient(circle at 85% 0%, rgba(56, 189, 248, 0.08), transparent 40%);
+    }
+
+    .glass-panel {
+      background: rgba(15, 20, 38, 0.85);
+      backdrop-filter: blur(14px);
+      border: 1px solid rgba(255, 255, 255, 0.09);
+    }
+
+    .custom-scroll::-webkit-scrollbar {
+      width: 7px;
+      height: 7px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.45);
+      border-radius: 999px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: rgba(148, 163, 184, 0.35);
+      border-radius: 999px;
+    }
+
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: rgba(148, 163, 184, 0.55);
+    }
+  </style>
+</head>
+<body class="app-backdrop custom-scroll">
+  <div id="app" class="min-h-screen flex flex-col"></div>
+
+  <script>
+    (function () {
+      "use strict";
+
+      /* =====================================================================
+         1. ALMACENAMIENTO SEGURO CON RESPALDO EN MEMORIA
+         ===================================================================== */
+      const memoryStore = new Map();
+      const STORAGE_PREFIX = "studio_personajes_v10_";
+      const GLOBAL_KEY = STORAGE_PREFIX + "global_state";
+
+      function safeGetItem(key) {
+        try {
+          if (window.localStorage) {
+            const val = window.localStorage.getItem(key);
+            if (val !== null) return val;
+          }
+        } catch (_err) {
+          // Respaldo en memoria si localStorage no está disponible o está bloqueado
+        }
+        return memoryStore.has(key) ? memoryStore.get(key) : null;
+      }
+
+      function safeSetItem(key, value) {
+        memoryStore.set(key, String(value));
+        try {
+          if (window.localStorage) {
+            window.localStorage.setItem(key, String(value));
+          }
+        } catch (_err) {
+          // Ya guardado de forma segura en memoryStore
+        }
+      }
+
+      /* =====================================================================
+         2. CATÁLOGOS DE PALETAS, FUENTES Y COLORES EMOCIONALES
+         ===================================================================== */
+      const CARD_THEMES = [
+        {
+          id: "cosmico-oscuro",
+          name: "Cósmico Oscuro",
+          bgStart: "#0c1021",
+          bgEnd: "#171d38",
+          surface: "rgba(25, 33, 61, 0.86)",
+          border: "rgba(139, 92, 246, 0.35)",
+          accent: "#8b5cf6",
+          badgeBg: "rgba(139, 92, 246, 0.2)",
+          badgeText: "#ddd6fe",
+          text: "#f8fafc",
+          muted: "#94a3b8",
+          glow: "rgba(139, 92, 246, 0.28)"
+        },
+        {
+          id: "aurora-violeta",
+          name: "Aurora Violeta",
+          bgStart: "#180b29",
+          bgEnd: "#2c1247",
+          surface: "rgba(49, 20, 82, 0.86)",
+          border: "rgba(192, 132, 252, 0.38)",
+          accent: "#c084fc",
+          badgeBg: "rgba(192, 132, 252, 0.2)",
+          badgeText: "#f3e8ff",
+          text: "#fdf4ff",
+          muted: "#c4b5fd",
+          glow: "rgba(192, 132, 252, 0.28)"
+        },
+        {
+          id: "esmeralda-nocturna",
+          name: "Esmeralda Nocturna",
+          bgStart: "#061b17",
+          bgEnd: "#0c332b",
+          surface: "rgba(13, 54, 45, 0.86)",
+          border: "rgba(52, 211, 153, 0.35)",
+          accent: "#34d399",
+          badgeBg: "rgba(52, 211, 153, 0.18)",
+          badgeText: "#a7f3d0",
+          text: "#ecfdf5",
+          muted: "#86efac",
+          glow: "rgba(52, 211, 153, 0.24)"
+        },
+        {
+          id: "carmesi-estelar",
+          name: "Carmesí Estelar",
+          bgStart: "#220812",
+          bgEnd: "#3d0e20",
+          surface: "rgba(69, 15, 36, 0.86)",
+          border: "rgba(251, 113, 133, 0.38)",
+          accent: "#fb7185",
+          badgeBg: "rgba(251, 113, 133, 0.2)",
+          badgeText: "#ffe4e6",
+          text: "#fff1f2",
+          muted: "#fda4af",
+          glow: "rgba(251, 113, 133, 0.26)"
+        },
+        {
+          id: "pizarra-minimal",
+          name: "Pizarra Minimal",
+          bgStart: "#111318",
+          bgEnd: "#1e222b",
+          surface: "rgba(35, 40, 51, 0.88)",
+          border: "rgba(148, 163, 184, 0.28)",
+          accent: "#e2e8f0",
+          badgeBg: "rgba(226, 232, 240, 0.16)",
+          badgeText: "#f1f5f9",
+          text: "#f8fafc",
+          muted: "#94a3b8",
+          glow: "rgba(203, 213, 225, 0.18)"
+        },
+        {
+          id: "ocaso-dorado",
+          name: "Ocaso Dorado",
+          bgStart: "#231206",
+          bgEnd: "#42210b",
+          surface: "rgba(74, 37, 12, 0.86)",
+          border: "rgba(251, 191, 36, 0.38)",
+          accent: "#fbbf24",
+          badgeBg: "rgba(251, 191, 36, 0.2)",
+          badgeText: "#fef3c7",
+          text: "#fffbeb",
+          muted: "#fcd34d",
+          glow: "rgba(251, 191, 36, 0.25)"
+        },
+        {
+          id: "nebulosa-cian",
+          name: "Nebulosa Cian",
+          bgStart: "#051923",
+          bgEnd: "#0a2f42",
+          surface: "rgba(11, 52, 74, 0.86)",
+          border: "rgba(34, 211, 238, 0.38)",
+          accent: "#22d3ee",
+          badgeBg: "rgba(34, 211, 238, 0.18)",
+          badgeText: "#cffafe",
+          text: "#ecfeff",
+          muted: "#67e8f9",
+          glow: "rgba(34, 211, 238, 0.25)"
+        },
+        {
+          id: "rosa-crepusculo",
+          name: "Rosa Crepúsculo",
+          bgStart: "#240a1d",
+          bgEnd: "#421235",
+          surface: "rgba(74, 20, 60, 0.86)",
+          border: "rgba(244, 114, 182, 0.38)",
+          accent: "#f472b6",
+          badgeBg: "rgba(244, 114, 182, 0.2)",
+          badgeText: "#fce7f3",
+          text: "#fdf2f8",
+          muted: "#f9a8d4",
+          glow: "rgba(244, 114, 182, 0.26)"
+        },
+        {
+          id: "amatista-real",
+          name: "Amatista Real",
+          bgStart: "#130b2e",
+          bgEnd: "#241454",
+          surface: "rgba(42, 24, 97, 0.86)",
+          border: "rgba(167, 139, 250, 0.38)",
+          accent: "#a78bfa",
+          badgeBg: "rgba(167, 139, 250, 0.2)",
+          badgeText: "#ede9fe",
+          text: "#f5f3ff",
+          muted: "#c4b5fd",
+          glow: "rgba(167, 139, 250, 0.26)"
+        },
+        {
+          id: "artico-glacial",
+          name: "Ártico Glacial",
+          bgStart: "#091826",
+          bgEnd: "#122d47",
+          surface: "rgba(20, 50, 79, 0.86)",
+          border: "rgba(125, 211, 252, 0.38)",
+          accent: "#7dd3fc",
+          badgeBg: "rgba(125, 211, 252, 0.2)",
+          badgeText: "#e0f2fe",
+          text: "#f0f9ff",
+          muted: "#bae6fd",
+          glow: "rgba(125, 211, 252, 0.25)"
+        },
+        {
+          id: "obsidiana-oro",
+          name: "Obsidiana Oro",
+          bgStart: "#14110a",
+          bgEnd: "#292212",
+          surface: "rgba(46, 38, 19, 0.88)",
+          border: "rgba(234, 179, 8, 0.42)",
+          accent: "#eab308",
+          badgeBg: "rgba(234, 179, 8, 0.2)",
+          badgeText: "#fef08a",
+          text: "#fefce8",
+          muted: "#fde047",
+          glow: "rgba(234, 179, 8, 0.24)"
+        },
+        {
+          id: "cerezo-pastel",
+          name: "Cerezo Pastel",
+          bgStart: "#29121b",
+          bgEnd: "#471e2e",
+          surface: "rgba(79, 33, 51, 0.86)",
+          border: "rgba(253, 164, 175, 0.42)",
+          accent: "#fda4af",
+          badgeBg: "rgba(253, 164, 175, 0.22)",
+          badgeText: "#ffe4e6",
+          text: "#fff1f2",
+          muted: "#fecdd3",
+          glow: "rgba(253, 164, 175, 0.25)"
+        },
+        {
+          id: "ciberpunk-neon",
+          name: "Ciberpunk Neón",
+          bgStart: "#090d1e",
+          bgEnd: "#1c103b",
+          surface: "rgba(28, 18, 59, 0.88)",
+          border: "rgba(232, 121, 249, 0.44)",
+          accent: "#e879f9",
+          badgeBg: "rgba(34, 211, 238, 0.18)",
+          badgeText: "#a5f3fc",
+          text: "#fdf4ff",
+          muted: "#f0abfc",
+          glow: "rgba(232, 121, 249, 0.28)"
+        },
+        {
+          id: "bosque-profundo",
+          name: "Bosque Profundo",
+          bgStart: "#09170e",
+          bgEnd: "#132e1c",
+          surface: "rgba(20, 51, 31, 0.86)",
+          border: "rgba(74, 222, 128, 0.36)",
+          accent: "#4ade80",
+          badgeBg: "rgba(74, 222, 128, 0.18)",
+          badgeText: "#dcfce7",
+          text: "#f0fdf4",
+          muted: "#86efac",
+          glow: "rgba(74, 222, 128, 0.24)"
+        },
+        {
+          id: "terracota-calida",
+          name: "Terracota Cálida",
+          bgStart: "#24100b",
+          bgEnd: "#421d14",
+          surface: "rgba(74, 32, 22, 0.86)",
+          border: "rgba(251, 146, 60, 0.4)",
+          accent: "#fb923c",
+          badgeBg: "rgba(251, 146, 60, 0.2)",
+          badgeText: "#ffedd5",
+          text: "#fff7ed",
+          muted: "#fdba74",
+          glow: "rgba(251, 146, 60, 0.25)"
+        },
+        {
+          id: "zafiro-imperial",
+          name: "Zafiro Imperial",
+          bgStart: "#071129",
+          bgEnd: "#0f2352",
+          surface: "rgba(18, 41, 94, 0.86)",
+          border: "rgba(96, 165, 250, 0.4)",
+          accent: "#60a5fa",
+          badgeBg: "rgba(96, 165, 250, 0.2)",
+          badgeText: "#dbeafe",
+          text: "#eff6ff",
+          muted: "#93c5fd",
+          glow: "rgba(96, 165, 250, 0.26)"
+        },
+        {
+          id: "lavanda-nocturna",
+          name: "Lavanda Nocturna",
+          bgStart: "#18122b",
+          bgEnd: "#2b204d",
+          surface: "rgba(47, 35, 84, 0.86)",
+          border: "rgba(196, 181, 253, 0.4)",
+          accent: "#c4b5fd",
+          badgeBg: "rgba(196, 181, 253, 0.2)",
+          badgeText: "#ede9fe",
+          text: "#f5f3ff",
+          muted: "#ddd6fe",
+          glow: "rgba(196, 181, 253, 0.25)"
+        },
+        {
+          id: "ambar-bronce",
+          name: "Ámbar Bronce",
+          bgStart: "#1f140b",
+          bgEnd: "#382414",
+          surface: "rgba(64, 41, 22, 0.86)",
+          border: "rgba(217, 119, 6, 0.42)",
+          accent: "#f59e0b",
+          badgeBg: "rgba(245, 158, 11, 0.2)",
+          badgeText: "#fef3c7",
+          text: "#fffbeb",
+          muted: "#fcd34d",
+          glow: "rgba(245, 158, 11, 0.24)"
+        },
+        {
+          id: "menta-suave",
+          name: "Menta Suave",
+          bgStart: "#081c1a",
+          bgEnd: "#103632",
+          surface: "rgba(17, 59, 54, 0.86)",
+          border: "rgba(94, 234, 212, 0.38)",
+          accent: "#5eead4",
+          badgeBg: "rgba(94, 234, 212, 0.18)",
+          badgeText: "#ccfbf1",
+          text: "#f0fdfa",
+          muted: "#99f6e4",
+          glow: "rgba(94, 234, 212, 0.24)"
+        },
+        {
+          id: "medianoche-indigo",
+          name: "Medianoche Índigo",
+          bgStart: "#0b0d24",
+          bgEnd: "#171b47",
+          surface: "rgba(25, 30, 79, 0.86)",
+          border: "rgba(129, 140, 248, 0.4)",
+          accent: "#818cf8",
+          badgeBg: "rgba(129, 140, 248, 0.2)",
+          badgeText: "#e0e7ff",
+          text: "#eef2ff",
+          muted: "#a5b4fc",
+          glow: "rgba(129, 140, 248, 0.26)"
+        }
+      ];
+
+      const NAME_FONTS = [
+        { id: "plus-jakarta", label: "Plus Jakarta (Moderna)", css: "'Plus Jakarta Sans', sans-serif", canvas: "700 %spx 'Plus Jakarta Sans', sans-serif" },
+        { id: "poppins", label: "Poppins (Geométrica)", css: "'Poppins', sans-serif", canvas: "700 %spx 'Poppins', sans-serif" },
+        { id: "quicksand", label: "Quicksand (Suave)", css: "'Quicksand', sans-serif", canvas: "700 %spx 'Quicksand', sans-serif" },
+        { id: "playfair", label: "Playfair Display (Editorial)", css: "'Playfair Display', Georgia, serif", canvas: "700 %spx 'Playfair Display', Georgia, serif" },
+        { id: "playfair-italic", label: "Playfair Cursiva Elegante", css: "'Playfair Display', Georgia, serif", italic: true, canvas: "italic 700 %spx 'Playfair Display', Georgia, serif" },
+        { id: "cormorant", label: "Cormorant Garamond (Clásica)", css: "'Cormorant Garamond', Georgia, serif", canvas: "700 %spx 'Cormorant Garamond', Georgia, serif" },
+        { id: "eb-garamond", label: "EB Garamond (Literaria)", css: "'EB Garamond', Georgia, serif", canvas: "700 %spx 'EB Garamond', Georgia, serif" },
+        { id: "lora", label: "Lora (Cálida Serif)", css: "'Lora', Georgia, serif", canvas: "700 %spx 'Lora', Georgia, serif" },
+        { id: "cinzel", label: "Cinzel (Épica / Mitológica)", css: "'Cinzel', Georgia, serif", canvas: "700 %spx 'Cinzel', Georgia, serif" },
+        { id: "unifraktur", label: "UnifrakturMaguntia (Gótica Antigua)", css: "'UnifrakturMaguntia', Georgia, serif", canvas: "400 %spx 'UnifrakturMaguntia', Georgia, serif" },
+        { id: "medieval", label: "MedievalSharp (Medieval)", css: "'MedievalSharp', cursive", canvas: "400 %spx 'MedievalSharp', cursive" },
+        { id: "pirata", label: "Pirata One (Aventura / Pirata)", css: "'Pirata One', cursive", canvas: "400 %spx 'Pirata One', cursive" },
+        { id: "dancing", label: "Dancing Script (Manuscrita)", css: "'Dancing Script', cursive", canvas: "700 %spx 'Dancing Script', cursive" },
+        { id: "great-vibes", label: "Great Vibes (Caligrafía Fina)", css: "'Great Vibes', cursive", canvas: "400 %spx 'Great Vibes', cursive" },
+        { id: "pacifico", label: "Pacifico (Retro Fluida)", css: "'Pacifico', cursive", canvas: "400 %spx 'Pacifico', cursive" },
+        { id: "orbitron", label: "Orbitron (Sci-Fi / Futurista)", css: "'Orbitron', sans-serif", canvas: "700 %spx 'Orbitron', sans-serif" },
+        { id: "rajdhani", label: "Rajdhani (Táctica / Mecánica)", css: "'Rajdhani', sans-serif", canvas: "700 %spx 'Rajdhani', sans-serif" },
+        { id: "jetbrains", label: "JetBrains Mono (Código / Archivo)", css: "'JetBrains Mono', monospace", canvas: "700 %spx 'JetBrains Mono', monospace" }
+      ];
+
+      const EMOTION_COLORS = [
+        "#f43f5e", "#e11d48", "#fb7185", "#f97316", "#f59e0b",
+        "#eab308", "#84cc16", "#22c55e", "#10b981", "#14b8a6",
+        "#06b6d4", "#0ea5e9", "#3b82f6", "#6366f1", "#8b5cf6",
+        "#a855f7", "#d946ef", "#ec4899", "#f472b6", "#fda4af",
+        "#94a3b8", "#e2e8f0"
+      ];
+
+      const AVATAR_SHAPES = ["rounded-square", "circle", "heart"];
+
+      /* =====================================================================
+         3. MODELO DE DATOS Y NORMALIZACIÓN DE PERSONAJES
+         ===================================================================== */
+      function createDefaultCharacters() {
+        return [
+          {
+            id: "char-kaelen-vance",
+            name: "Kaelen Vance",
+            title: "Explorador Astral",
+            position: "Confidente Principal",
+            description:
+              "Mantiene la calma bajo presión extrema mientras cartografía rutas entre nebulosas. Observa cada detalle antes de entregar su confianza.",
+            spotifyUrl: "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT",
+            spotifyTitle: "Never Gonna Give You Up",
+            spotifyArtist: "Rick Astley • Spotify",
+            spotifyCover: "",
+            themeId: "cosmico-oscuro",
+            nameFontId: "cinzel",
+            avatarUrl: "",
+            avatarPosition: "center",
+            avatarShape: "rounded-square",
+            avatarScale: 100,
+            bannerUrl: "",
+            bannerPosition: "center",
+            bodyBgUrl: "",
+            bodyBgPosition: "center",
+            bodyBgOverlay: 0.68,
+            overlays: [],
+            tipsWarnings:
+              "Consejo: Responde mejor a conversaciones pausadas y sinceras. Advertencia: Evita presionar temas de su pasado antes de construir confianza.",
+            emotions: [
+              {
+                id: "emo-1",
+                label: "Alegría",
+                value: 65,
+                color: "#fbbf24",
+                note: "Se manifiesta en gestos sutiles, sonrisas contenidas y complicidad tranquila."
+              },
+              {
+                id: "emo-2",
+                label: "Serenidad",
+                value: 85,
+                color: "#34d399",
+                note: "Conserva el control emocional incluso cuando la situación se vuelve crítica."
+              },
+              {
+                id: "emo-3",
+                label: "Ira",
+                value: 20,
+                color: "#f43f5e",
+                note: "Permanece baja salvo que alguien bajo su protección corra peligro."
+              },
+              {
+                id: "emo-4",
+                label: "Curiosidad",
+                value: 92,
+                color: "#38bdf8",
+                note: "Analiza cada pista, palabra o misterio nuevo con profunda atención."
+              }
+            ]
+          },
+          {
+            id: "char-lyra-solis",
+            name: "Lyra Solis",
+            title: "Alquimista Ígnea",
+            position: "Aliada Cercana",
+            description:
+              "Combina intuición artística con experimentos audaces de luz y calor. Habla con franqueza y defiende sus ideas con pasión.",
+            spotifyUrl: "https://open.spotify.com/track/0VjIjW4GlUZ3LJ2v38i6Z8",
+            spotifyTitle: "Blinding Lights",
+            spotifyArtist: "The Weeknd • Spotify",
+            spotifyCover: "",
+            themeId: "carmesi-estelar",
+            nameFontId: "dancing",
+            avatarUrl: "",
+            avatarPosition: "top",
+            avatarShape: "rounded-square",
+            avatarScale: 100,
+            bannerUrl: "",
+            bannerPosition: "center",
+            bodyBgUrl: "",
+            bodyBgOverlay: 0.72,
+            overlays: [],
+            tipsWarnings:
+              "Consejo: Celebra sus avances creativos y dale espacio para probar ideas. Advertencia: Puede impacientarse si se frena su impulso sin motivos claros.",
+            emotions: [
+              {
+                id: "emo-5",
+                label: "Entusiasmo",
+                value: 88,
+                color: "#fb923c",
+                note: "Contagia energía cuando descubre una fórmula o ruta inesperada."
+              },
+              {
+                id: "emo-6",
+                label: "Afecto",
+                value: 74,
+                color: "#f472b6",
+                note: "Demuestra cariño mediante detalles prácticos y cercanía directa."
+              },
+              {
+                id: "emo-7",
+                label: "Impulsividad",
+                value: 58,
+                color: "#e879f9",
+                note: "Actúa rápido ante lo que la emociona antes de revisar todos los riesgos."
+              },
+              {
+                id: "emo-8",
+                label: "Determinación",
+                value: 81,
+                color: "#a78bfa",
+                note: "No abandona un objetivo cuando siente que vale la pena."
+              }
+            ]
+          }
+        ];
+      }
+
+      function normalizeOverlays(rawOverlays) {
+        if (!Array.isArray(rawOverlays)) return [];
+        return rawOverlays
+          .map((item, idx) => {
+            if (!item || typeof item !== "object") return null;
+            const url = String(item.url || "").trim();
+            if (!url) return null;
+            return {
+              id: String(item.id || `ovl-${Date.now()}-${idx}`),
+              url,
+              x: Math.max(0, Math.min(100, Number(item.x) || 50)),
+              y: Math.max(0, Math.min(100, Number(item.y) || 50)),
+              size: Math.max(24, Math.min(280, Number(item.size) || 88))
+            };
+          })
+          .filter(Boolean);
+      }
+
+      function normalizeCharacter(raw, idx) {
+        const base = createDefaultCharacters()[idx % 2];
+        const emotions = Array.isArray(raw && raw.emotions) && raw.emotions.length > 0
+          ? raw.emotions.map((e, i) => ({
+              id: String(e.id || `emo-${Date.now()}-${i}`),
+              label: String(e.label || `Emoción ${i + 1}`),
+              value: Math.max(0, Math.min(100, Number(e.value) || 0)),
+              color: String(e.color || EMOTION_COLORS[i % EMOTION_COLORS.length]),
+              note: String(e.note || "")
+            }))
+          : base.emotions;
+
+        const themeExists = CARD_THEMES.some((t) => t.id === (raw && raw.themeId));
+        const fontExists = NAME_FONTS.some((f) => f.id === (raw && raw.nameFontId));
+        const shapeExists = AVATAR_SHAPES.includes(raw && raw.avatarShape);
+        const scaleVal = typeof (raw && raw.avatarScale) === "number"
+          ? Math.max(70, Math.min(145, Math.round(raw.avatarScale)))
+          : Number(raw && raw.avatarScale)
+          ? Math.max(70, Math.min(145, Math.round(Number(raw.avatarScale))))
+          : 100;
+
+        return {
+          id: String((raw && raw.id) || `char-${Date.now()}-${idx}`),
+          name: String((raw && raw.name) || "Personaje Sin Nombre"),
+          title: String((raw && raw.title) || ""),
+          position: String((raw && raw.position) || ""),
+          description: String((raw && raw.description) || ""),
+          spotifyUrl: String((raw && raw.spotifyUrl) || ""),
+          spotifyTitle: String((raw && raw.spotifyTitle) || ""),
+          spotifyArtist: String((raw && raw.spotifyArtist) || ""),
+          spotifyCover: String((raw && raw.spotifyCover) || ""),
+          themeId: themeExists ? raw.themeId : "cosmico-oscuro",
+          nameFontId: fontExists ? raw.nameFontId : "plus-jakarta",
+          avatarUrl: String((raw && raw.avatarUrl) || ""),
+          avatarPosition: ["top", "center", "bottom"].includes(raw && raw.avatarPosition) ? raw.avatarPosition : "center",
+          avatarShape: shapeExists ? raw.avatarShape : "rounded-square",
+          avatarScale: scaleVal,
+          bannerUrl: String((raw && raw.bannerUrl) || ""),
+          bannerPosition: ["top", "center", "bottom"].includes(raw && raw.bannerPosition) ? raw.bannerPosition : "center",
+          bodyBgUrl: String((raw && raw.bodyBgUrl) || ""),
+          bodyBgPosition: ["top", "center", "bottom"].includes(raw && raw.bodyBgPosition) ? raw.bodyBgPosition : "center",
+          bodyBgOverlay: typeof (raw && raw.bodyBgOverlay) === "number" ? Math.max(0.2, Math.min(0.92, raw.bodyBgOverlay)) : 0.68,
+          overlays: normalizeOverlays(raw && raw.overlays),
+          tipsWarnings: String((raw && raw.tipsWarnings) || ""),
+          emotions
+        };
+      }
+
+      /* =====================================================================
+         4. CUENTAS LOCALES Y PERSISTENCIA
+         ===================================================================== */
+      function createDefaultAccountState(accountName) {
+        const chars = createDefaultCharacters();
+        return {
+          accountName: accountName || "Invitado",
+          autoSave: true,
+          pageThemeId: "cosmico-oscuro",
+          characters: chars,
+          selectedId: chars[0].id
+        };
+      }
+
+      function getAccountStorageKey(accountName) {
+        const clean = String(accountName || "Invitado").trim().toLowerCase().replace(/[^a-z0-9_-]+/g, "_") || "invitado";
+        return `${STORAGE_PREFIX}account_${clean}`;
+      }
+
+      function loadGlobalMeta() {
+        try {
+          const raw = safeGetItem(GLOBAL_KEY);
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const accounts = Array.isArray(parsed.accounts) && parsed.accounts.length > 0
+              ? parsed.accounts.map((a) => String(a).trim()).filter(Boolean)
+              : ["Invitado"];
+            const currentAccount = accounts.includes(parsed.currentAccount) ? parsed.currentAccount : accounts[0];
+            return { currentAccount, accounts };
+          }
+        } catch (_err) {
+          // Respaldo por defecto
+        }
+        return { currentAccount: "Invitado", accounts: ["Invitado"] };
+      }
+
+      function saveGlobalMeta(meta) {
+        safeSetItem(GLOBAL_KEY, JSON.stringify({
+          currentAccount: meta.currentAccount || "Invitado",
+          accounts: Array.isArray(meta.accounts) && meta.accounts.length > 0 ? meta.accounts : ["Invitado"]
+        }));
+      }
+
+      function loadAccountData(accountName) {
+        try {
+          const raw = safeGetItem(getAccountStorageKey(accountName));
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            const chars = Array.isArray(parsed.characters) && parsed.characters.length > 0
+              ? parsed.characters.map((c, i) => normalizeCharacter(c, i))
+              : createDefaultCharacters();
+            const selectedId = chars.some((c) => c.id === parsed.selectedId) ? parsed.selectedId : chars[0].id;
+            const validPageTheme = CARD_THEMES.some((t) => t.id === parsed.pageThemeId) ? parsed.pageThemeId : "cosmico-oscuro";
+            return {
+              accountName: accountName || "Invitado",
+              autoSave: parsed.autoSave !== false,
+              pageThemeId: validPageTheme,
+              characters: chars,
+              selectedId
+            };
+          }
+        } catch (_err) {
+          // Respaldo inicial
+        }
+        return createDefaultAccountState(accountName);
+      }
+
+      function persistAccountData(state, forceWrite) {
+        if (!state) return;
+        if (!forceWrite && state.autoSave === false) return;
+        try {
+          safeSetItem(getAccountStorageKey(state.accountName), JSON.stringify({
+            accountName: state.accountName,
+            autoSave: state.autoSave !== false,
+            pageThemeId: state.pageThemeId || "cosmico-oscuro",
+            characters: state.characters,
+            selectedId: state.selectedId
+          }));
+        } catch (_err) {
+          // Respaldo en memoria ya asegurado
+        }
+      }
+
+      /* =====================================================================
+         5. ENLACES COMPARTIBLES (#share=) Y METADATOS DE SPOTIFY
+         ===================================================================== */
+      function encodeSharePayload(character) {
+        const cleanChar = normalizeCharacter(character, 0);
+        const payload = {
+          v: 10,
+          name: cleanChar.name,
+          title: cleanChar.title,
+          position: cleanChar.position,
+          description: cleanChar.description,
+          spotifyUrl: cleanChar.spotifyUrl,
+          spotifyTitle: cleanChar.spotifyTitle,
+          spotifyArtist: cleanChar.spotifyArtist,
+          spotifyCover: cleanChar.spotifyCover,
+          themeId: cleanChar.themeId,
+          nameFontId: cleanChar.nameFontId,
+          avatarUrl: cleanChar.avatarUrl,
+          avatarPosition: cleanChar.avatarPosition,
+          avatarShape: cleanChar.avatarShape,
+          avatarScale: cleanChar.avatarScale,
+          bannerUrl: cleanChar.bannerUrl,
+          bannerPosition: cleanChar.bannerPosition,
+          bodyBgUrl: cleanChar.bodyBgUrl,
+          bodyBgPosition: cleanChar.bodyBgPosition,
+          bodyBgOverlay: cleanChar.bodyBgOverlay,
+          overlays: cleanChar.overlays,
+          tipsWarnings: cleanChar.tipsWarnings,
+          emotions: cleanChar.emotions.map((e) => ({
+            id: e.id,
+            label: e.label,
+            value: e.value,
+            color: e.color,
+            note: e.note
+          }))
+        };
+        const jsonStr = JSON.stringify(payload);
+        const bytes = new TextEncoder().encode(jsonStr);
+        let binary = "";
+        const chunkSize = 0x8000;
+        for (let i = 0; i < bytes.length; i += chunkSize) {
+          binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunkSize));
+        }
+        const b64 = btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+        return `${window.location.origin}${window.location.pathname}#share=${b64}`;
+      }
+
+      function decodeShareFromHash() {
+        try {
+          const hash = window.location.hash || "";
+          if (!hash.startsWith("#share=")) return null;
+          let b64 = hash.slice(7).trim();
+          if (!b64) return null;
+          b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
+          while (b64.length % 4) b64 += "=";
+          const binary = atob(b64);
+          const bytes = new Uint8Array(binary.length);
+          for (let i = 0; i < binary.length; i++) {
+            bytes[i] = binary.charCodeAt(i);
+          }
+          const jsonStr = new TextDecoder().decode(bytes);
+          const parsed = JSON.parse(jsonStr);
+          if (!parsed || typeof parsed !== "object") return null;
+          return normalizeCharacter({ ...parsed, id: "shared-character" }, 0);
+        } catch (_err) {
+          return null;
+        }
+      }
+
+      function parseSpotifyUrl(url) {
+        const raw = String(url || "").trim();
+        if (!raw) return null;
+        const match = raw.match(/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|episode|album|playlist)\/([a-zA-Z0-9]+)/i);
+        if (match) {
+          return {
+            kind: match[1].toLowerCase(),
+            id: match[2],
+            url: raw,
+            embedUrl: `https://open.spotify.com/embed/${match[1].toLowerCase()}/${match[2]}?utm_source=generator`
+          };
+        }
+        const uriMatch = raw.match(/^spotify:(track|episode|album|playlist):([a-zA-Z0-9]+)$/i);
+        if (uriMatch) {
+          return {
+            kind: uriMatch[1].toLowerCase(),
+            id: uriMatch[2],
+            url: `https://open.spotify.com/${uriMatch[1].toLowerCase()}/${uriMatch[2]}`,
+            embedUrl: `https://open.spotify.com/embed/${uriMatch[1].toLowerCase()}/${uriMatch[2]}?utm_source=generator`
+          };
+        }
+        return {
+          kind: "track",
+          id: "",
+          url: raw,
+          embedUrl: ""
+        };
+      }
+
+      const spotifyLookupCache = new Map();
+      let lastSpotifyLookupUrl = "";
+
+      async function lookupSpotifyMetadata(rawUrl, forceLookup) {
+        const trimmed = String(rawUrl || "").trim();
+        if (!trimmed) return null;
+        if (!forceLookup && trimmed === lastSpotifyLookupUrl) return null;
+        if (
+          !/open\.spotify\.com\/(?:intl-[a-z]{2}\/)?(track|episode|album|playlist)\/[a-zA-Z0-9]+/i.test(trimmed) &&
+          !/^spotify:(track|episode|album|playlist):[a-zA-Z0-9]+$/i.test(trimmed)
+        ) {
+          return null;
+        }
+
+        lastSpotifyLookupUrl = trimmed;
+        if (spotifyLookupCache.has(trimmed)) {
+          return spotifyLookupCache.get(trimmed);
+        }
+
+        const canonicalUrl = trimmed.startsWith("spotify:")
+          ? (parseSpotifyUrl(trimmed) && parseSpotifyUrl(trimmed).url) || trimmed
+          : trimmed;
+
+        try {
+          const endpoint = `https://open.spotify.com/oembed?url=${encodeURIComponent(canonicalUrl)}`;
+          const resp = await fetch(endpoint);
+          if (!resp.ok) return null;
+          const data = await resp.json();
+          const parsed = {
+            title: String(data && data.title ? data.title : "").trim(),
+            artist: String(data && data.author_name ? `${data.author_name} • Spotify` : "Spotify").trim(),
+            cover: String(data && data.thumbnail_url ? data.thumbnail_url : "").trim()
+          };
+          spotifyLookupCache.set(trimmed, parsed);
+          return parsed;
+        } catch (_err) {
+          return null;
+        }
+      }
+
+      /* =====================================================================
+         6. UTILIDADES DE MEDIOS, FORMAS Y CODIFICADOR GIF89a EN CANVAS
+         ===================================================================== */
+      function isGifMedia(src) {
+        const s = String(src || "").trim().toLowerCase();
+        if (!s) return false;
+        return s.startsWith("data:image/gif") || /\.gif(?:$|[?#])/i.test(s) || s.includes("image/gif");
+      }
+
+      function hasAnyGif(char) {
+        if (!char) return false;
+        if (isGifMedia(char.avatarUrl) || isGifMedia(char.bannerUrl) || isGifMedia(char.bodyBgUrl)) {
+          return true;
+        }
+        if (Array.isArray(char.overlays) && char.overlays.some((o) => isGifMedia(o && o.url))) {
+          return true;
+        }
+        return false;
+      }
+
+      function getObjectPositionCss(pos) {
+        if (pos === "top") return "center top";
+        if (pos === "bottom") return "center bottom";
+        return "center center";
+      }
+
+      function getThemeById(id) {
+        return CARD_THEMES.find((t) => t.id === id) || CARD_THEMES[0];
+      }
+
+      function getFontById(id) {
+        return NAME_FONTS.find((f) => f.id === id) || NAME_FONTS[0];
+      }
+
+      function getDominantEmotion(emotions) {
+        if (!Array.isArray(emotions) || emotions.length === 0) {
+          return { label: "Equilibrio", value: 0, color: "#8b5cf6" };
+        }
+        return emotions.reduce((best, cur) => ((Number(cur.value) || 0) > (Number(best.value) || 0) ? cur : best), emotions[0]);
+      }
+
+      function getInitials(name) {
+        const parts = String(name || "CP").trim().split(/\s+/).filter(Boolean);
+        if (parts.length === 0) return "CP";
+        if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
+        return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+      }
+
+      function getAvatarShapeLabel(shape) {
+        if (shape === "circle") return "Redondo";
+        if (shape === "heart") return "Corazón";
+        return "Cuadrado redondeado";
+      }
+
+      function getAvatarClipPathCss(shape) {
+        if (shape === "circle") return "circle(50% at 50% 50%)";
+        if (shape === "heart") {
+          return "path('M 50 92 C 47 90 8 63 8 33 C 8 17 20 8 33 8 C 41 8 47 12 50 18 C 53 12 59 8 67 8 C 80 8 92 17 92 33 C 92 63 53 90 50 92 Z')";
+        }
+        return "inset(0% round 22px)";
+      }
+
+      function drawRoundedRect(ctx, x, y, w, h, r) {
+        const radius = Math.max(0, Math.min(r, w / 2, h / 2));
+        ctx.beginPath();
+        ctx.moveTo(x + radius, y);
+        ctx.arcTo(x + w, y, x + w, y + h, radius);
+        ctx.arcTo(x + w, y + h, x, y + h, radius);
+        ctx.arcTo(x, y + h, x, y, radius);
+        ctx.arcTo(x, y, x + w, y, radius);
+        ctx.closePath();
+      }
+
+      function applyAvatarShapeClip(ctx, shape, x, y, w, h) {
+        ctx.beginPath();
+        if (shape === "circle") {
+          ctx.ellipse(x + w * 0.5, y + h * 0.5, w * 0.5, h * 0.5, 0, 0, Math.PI * 2);
+          ctx.closePath();
+          return;
+        }
+        if (shape === "heart") {
+          const cx = x + w * 0.5;
+          const topY = y + h * 0.16;
+          ctx.moveTo(cx, y + h * 0.92);
+          ctx.bezierCurveTo(
+            x + w * 0.12,
+            y + h * 0.68,
+            x + w * 0.04,
+            y + h * 0.36,
+            x + w * 0.25,
+            topY
+          );
+          ctx.bezierCurveTo(
+            x + w * 0.38,
+            y + h * 0.06,
+            cx,
+            y + h * 0.14,
+            cx,
+            y + h * 0.27
+          );
+          ctx.bezierCurveTo(
+            cx,
+            y + h * 0.14,
+            x + w * 0.62,
+            y + h * 0.06,
+            x + w * 0.75,
+            topY
+          );
+          ctx.bezierCurveTo(
+            x + w * 0.96,
+            y + h * 0.36,
+            x + w * 0.88,
+            y + h * 0.68,
+            cx,
+            y + h * 0.92
+          );
+          ctx.closePath();
+          return;
+        }
+        drawRoundedRect(ctx, x, y, w, h, Math.min(w, h) * 0.18);
+      }
+
+      function quantizeMedianCut(rgba, maxColors) {
+        const pixelCount = rgba.length >> 2;
+        const samples = [];
+        const step = Math.max(1, Math.floor(pixelCount / 18000));
+
+        for (let i = 0; i < pixelCount; i += step) {
+          const idx = i << 2;
+          const a = rgba[idx + 3];
+          if (a < 16) continue;
+          samples.push([rgba[idx], rgba[idx + 1], rgba[idx + 2]]);
+        }
+
+        const palette = [];
+        const hasTransparent = true;
+        const transparentIndex = 0;
+        palette.push([0, 0, 0]);
+
+        const targetColors = Math.max(2, Math.min(255, maxColors - 1));
+
+        if (samples.length === 0) {
+          while (palette.length < 256) palette.push([18, 22, 38]);
+          return { palette, hasTransparent, transparentIndex };
+        }
+
+        function buildBox(colors) {
+          let rMin = 255, rMax = 0, gMin = 255, gMax = 0, bMin = 255, bMax = 0;
+          for (let i = 0; i < colors.length; i++) {
+            const [r, g, b] = colors[i];
+            if (r < rMin) rMin = r;
+            if (r > rMax) rMax = r;
+            if (g < gMin) gMin = g;
+            if (g > gMax) gMax = g;
+            if (b < bMin) bMin = b;
+            if (b > bMax) bMax = b;
+          }
+          const rSpan = rMax - rMin;
+          const gSpan = gMax - gMin;
+          const bSpan = bMax - bMin;
+          let channel = 0;
+          let maxSpan = rSpan;
+          if (gSpan >= maxSpan) {
+            maxSpan = gSpan;
+            channel = 1;
+          }
+          if (bSpan >= maxSpan) {
+            maxSpan = bSpan;
+            channel = 2;
+          }
+          return { colors, channel, maxSpan };
+        }
+
+        const boxes = [buildBox(samples)];
+
+        while (boxes.length < targetColors) {
+          let bestIdx = -1;
+          let bestSpan = -1;
+          for (let i = 0; i < boxes.length; i++) {
+            if (boxes[i].colors.length > 1 && boxes[i].maxSpan > bestSpan) {
+              bestSpan = boxes[i].maxSpan;
+              bestIdx = i;
+            }
+          }
+          if (bestIdx === -1) break;
+          const box = boxes[bestIdx];
+          const ch = box.channel;
+          box.colors.sort((a, b) => a[ch] - b[ch]);
+          const mid = Math.floor(box.colors.length / 2);
+          const left = box.colors.slice(0, mid);
+          const right = box.colors.slice(mid);
+          if (left.length === 0 || right.length === 0) break;
+          boxes.splice(bestIdx, 1, buildBox(left), buildBox(right));
+        }
+
+        for (let i = 0; i < boxes.length; i++) {
+          const cols = boxes[i].colors;
+          let rSum = 0, gSum = 0, bSum = 0;
+          for (let j = 0; j < cols.length; j++) {
+            rSum += cols[j][0];
+            gSum += cols[j][1];
+            bSum += cols[j][2];
+          }
+          const len = Math.max(1, cols.length);
+          palette.push([
+            Math.round(rSum / len),
+            Math.round(gSum / len),
+            Math.round(bSum / len)
+          ]);
+        }
+
+        while (palette.length < 256) {
+          palette.push([15, 20, 38]);
+        }
+
+        return { palette, hasTransparent, transparentIndex };
+      }
+
+      function mapRgbaToIndices(rgba, width, height, paletteInfo) {
+        const { palette, hasTransparent, transparentIndex } = paletteInfo;
+        const count = width * height;
+        const indices = new Uint8Array(count);
+        const cache = new Map();
+
+        for (let i = 0; i < count; i++) {
+          const p = i << 2;
+          const a = rgba[p + 3];
+          if (hasTransparent && a < 16) {
+            indices[i] = transparentIndex;
+            continue;
+          }
+          const r = rgba[p];
+          const g = rgba[p + 1];
+          const b = rgba[p + 2];
+          const key = ((r >> 3) << 10) | ((g >> 3) << 5) | (b >> 3);
+          let bestIdx = cache.get(key);
+          if (bestIdx === undefined) {
+            let bestDist = Infinity;
+            bestIdx = hasTransparent ? 1 : 0;
+            const startIdx = hasTransparent ? 1 : 0;
+            for (let c = startIdx; c < palette.length; c++) {
+              const pr = palette[c][0];
+              const pg = palette[c][1];
+              const pb = palette[c][2];
+              const dr = r - pr;
+              const dg = g - pg;
+              const db = b - pb;
+              const dist = dr * dr * 2 + dg * dg * 4 + db * db * 3;
+              if (dist < bestDist) {
+                bestDist = dist;
+                bestIdx = c;
+                if (dist === 0) break;
+              }
+            }
+            cache.set(key, bestIdx);
+          }
+          indices[i] = bestIdx;
+        }
+        return indices;
+      }
+
+      function lzwEncode(minCodeSize, indexStream) {
+        const clearCode = 1 << minCodeSize;
+        const eoiCode = clearCode + 1;
+        let codeSize = minCodeSize + 1;
+        let nextCode = eoiCode + 1;
+        const maxCodeLimit = 4096;
+
+        let dict = new Map();
+        function resetDict() {
+          dict = new Map();
+          codeSize = minCodeSize + 1;
+          nextCode = eoiCode + 1;
+        }
+
+        resetDict();
+
+        const out = [];
+        let bitBuf = 0;
+        let bitCount = 0;
+
+        function writeBits(code, width) {
+          bitBuf |= code << bitCount;
+          bitCount += width;
+          while (bitCount >= 8) {
+            out.push(bitBuf & 0xff);
+            bitBuf >>>= 8;
+            bitCount -= 8;
+          }
+        }
+
+        function flushBits() {
+          if (bitCount > 0) {
+            out.push(bitBuf & 0xff);
+            bitBuf = 0;
+            bitCount = 0;
+          }
+        }
+
+        writeBits(clearCode, codeSize);
+
+        if (indexStream.length > 0) {
+          let prefix = indexStream[0];
+          for (let i = 1; i < indexStream.length; i++) {
+            const k = indexStream[i];
+            const key = (prefix << 8) | k;
+            if (dict.has(key)) {
+              prefix = dict.get(key);
+            } else {
+              writeBits(prefix, codeSize);
+              if (nextCode < maxCodeLimit) {
+                dict.set(key, nextCode++);
+                if (nextCode > (1 << codeSize) && codeSize < 12) {
+                  codeSize++;
+                }
+              } else {
+                writeBits(clearCode, codeSize);
+                resetDict();
+              }
+              prefix = k;
+            }
+          }
+          writeBits(prefix, codeSize);
+        }
+
+        writeBits(eoiCode, codeSize);
+        flushBits();
+
+        const subBlocks = [];
+        for (let i = 0; i < out.length; i += 255) {
+          const slice = out.slice(i, i + 255);
+          subBlocks.push(slice.length, ...slice);
+        }
+        subBlocks.push(0x00);
+        return subBlocks;
+      }
+
+      function encodeAnimatedGif(width, height, framesWithDelays) {
+        const bytes = [];
+        function pushStr(str) {
+          for (let i = 0; i < str.length; i++) bytes.push(str.charCodeAt(i));
+        }
+        function pushU16(v) {
+          bytes.push(v & 0xff, (v >>> 8) & 0xff);
+        }
+
+        pushStr("GIF89a");
+        pushU16(width);
+        pushU16(height);
+        bytes.push(0x70, 0x00, 0x00);
+
+        bytes.push(0x21, 0xff, 0x0b);
+        pushStr("NETSCAPE2.0");
+        bytes.push(0x03, 0x01);
+        pushU16(0);
+        bytes.push(0x00);
+
+        for (let f = 0; f < framesWithDelays.length; f++) {
+          const { rgba, delayCs } = framesWithDelays[f];
+          const paletteInfo = quantizeMedianCut(rgba, 256);
+          const indices = mapRgbaToIndices(rgba, width, height, paletteInfo);
+
+          bytes.push(0x21, 0xf9, 0x04);
+          const disposal = 2;
+          const transFlag = paletteInfo.hasTransparent ? 1 : 0;
+          const packedGce = (disposal << 2) | transFlag;
+          bytes.push(packedGce);
+          pushU16(Math.max(2, delayCs || 10));
+          bytes.push(paletteInfo.transparentIndex);
+          bytes.push(0x00);
+
+          bytes.push(0x2c);
+          pushU16(0);
+          pushU16(0);
+          pushU16(width);
+          pushU16(height);
+          bytes.push(0x87);
+
+          for (let c = 0; c < 256; c++) {
+            const col = paletteInfo.palette[c] || [0, 0, 0];
+            bytes.push(col[0] & 0xff, col[1] & 0xff, col[2] & 0xff);
+          }
+
+          const minCodeSize = 8;
+          bytes.push(minCodeSize);
+          const lzwData = lzwEncode(minCodeSize, indices);
+          for (let b = 0; b < lzwData.length; b++) {
+            bytes.push(lzwData[b]);
+          }
+        }
+
+        bytes.push(0x3b);
+        return new Blob([new Uint8Array(bytes)], { type: "image/gif" });
+      }
+
+      async function decodeAnimatedGifFrames(src, maxFrames) {
+        const limit = maxFrames || 14;
+        if (!src || !isGifMedia(src)) return null;
+
+        if (typeof window.ImageDecoder === "function") {
+          try {
+            const resp = await fetch(src);
+            if (!resp.ok) throw new Error("Fetch failed");
+            const buf = await resp.arrayBuffer();
+            const decoder = new window.ImageDecoder({ data: buf, type: "image/gif" });
+            await decoder.tracks.ready;
+            const track = decoder.tracks.selectedTrack;
+            const totalFrames = track ? Math.min(track.frameCount || 1, limit) : 1;
+            const frames = [];
+
+            for (let i = 0; i < totalFrames; i++) {
+              const result = await decoder.decode({ frameIndex: i });
+              const vf = result.image;
+              const canvas = document.createElement("canvas");
+              canvas.width = vf.displayWidth || vf.codedWidth || 128;
+              canvas.height = vf.displayHeight || vf.codedHeight || 128;
+              const ctx = canvas.getContext("2d");
+              ctx.drawImage(vf, 0, 0, canvas.width, canvas.height);
+              const durationUs = vf.duration || 100000;
+              const delayCs = Math.max(3, Math.min(50, Math.round(durationUs / 10000)));
+              vf.close();
+              frames.push({ canvas, delayCs });
+            }
+            decoder.close();
+            if (frames.length > 0) return frames;
+          } catch (_err) {
+            // Respaldo a imagen estática si ImageDecoder no está disponible o bloquea CORS
+          }
+        }
+
+        return new Promise((resolve) => {
+          const img = new Image();
+          if (!src.startsWith("data:")) img.crossOrigin = "anonymous";
+          img.onload = () => {
+            const c = document.createElement("canvas");
+            c.width = img.naturalWidth || 200;
+            c.height = img.naturalHeight || 200;
+            const ctx = c.getContext("2d");
+            try {
+              ctx.drawImage(img, 0, 0, c.width, c.height);
+              resolve([{ canvas: c, delayCs: 10 }]);
+            } catch (_e) {
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
+      }
+
+      /* =====================================================================
+         7. RENDERIZADO DE TARJETA EN CANVAS (PNG Y GIF)
+         ===================================================================== */
+      function wrapLinesCanvas(ctx, text, maxWidth) {
+        const clean = String(text || "").replace(/\r\n/g, "\n").trim();
+        if (!clean) return [];
+        const paragraphs = clean.split("\n");
+        const lines = [];
+
+        for (let p = 0; p < paragraphs.length; p++) {
+          const words = paragraphs[p].trim().split(/\s+/).filter(Boolean);
+          if (words.length === 0) {
+            if (p < paragraphs.length - 1) lines.push("");
+            continue;
+          }
+          let current = words[0];
+          for (let w = 1; w < words.length; w++) {
+            const candidate = current + " " + words[w];
+            if (ctx.measureText(candidate).width <= maxWidth) {
+              current = candidate;
+            } else {
+              lines.push(current);
+              current = words[w];
+            }
+          }
+          lines.push(current);
+        }
+        return lines;
+      }
+
+      function drawMediaCoverSafe(ctx, mediaSource, dx, dy, dw, dh, alignPos) {
+        if (!mediaSource) return false;
+        const sw = mediaSource.naturalWidth || mediaSource.videoWidth || mediaSource.width || 0;
+        const sh = mediaSource.naturalHeight || mediaSource.videoHeight || mediaSource.height || 0;
+        if (!sw || !sh || !dw || !dh) return false;
+
+        try {
+          const scale = Math.max(dw / sw, dh / sh);
+          const drawW = sw * scale;
+          const drawH = sh * scale;
+          const drawX = dx + (dw - drawW) * 0.5;
+          let drawY = dy + (dh - drawH) * 0.5;
+          if (alignPos === "top") drawY = dy;
+          else if (alignPos === "bottom") drawY = dy + dh - drawH;
+
+          ctx.save();
+          drawRoundedRect(ctx, dx, dy, dw, dh, 0);
+          ctx.clip();
+          ctx.drawImage(mediaSource, drawX, drawY, drawW, drawH);
+          ctx.restore();
+          return true;
+        } catch (_err) {
+          return false;
+        }
+      }
+
+      function renderCardToCanvas(canvas, char, mediaBundle, frameIdx) {
+        const width = 920;
+        const padX = 42;
+        const innerW = width - padX * 2;
+        const theme = getThemeById(char.themeId);
+        const fontObj = getFontById(char.nameFontId);
+        const dominant = getDominantEmotion(char.emotions);
+
+        const measureCtx = canvas.getContext("2d");
+        measureCtx.font = fontObj.canvas.replace("%s", "44");
+        const nameLines = wrapLinesCanvas(measureCtx, char.name || "Personaje", innerW - 170);
+
+        measureCtx.font = "600 20px 'Plus Jakarta Sans', sans-serif";
+        const posLines = char.position ? wrapLinesCanvas(measureCtx, `Posición actual: ${char.position}`, innerW - 44) : [];
+
+        measureCtx.font = "400 20px 'Plus Jakarta Sans', sans-serif";
+        const descLines = char.description ? wrapLinesCanvas(measureCtx, char.description, innerW - 40) : [];
+
+        const hasMusic = Boolean(char.spotifyUrl || char.spotifyTitle);
+        const musicHeight = hasMusic ? 156 : 0;
+
+        const emotions = Array.isArray(char.emotions) ? char.emotions : [];
+        const colGap = 20;
+        const cardW = (innerW - colGap) / 2;
+        const rows = [];
+        for (let i = 0; i < emotions.length; i += 2) {
+          const leftEmo = emotions[i];
+          const rightEmo = emotions[i + 1] || null;
+
+          measureCtx.font = "400 16px 'Plus Jakarta Sans', sans-serif";
+          const leftNoteLines = leftEmo && leftEmo.note ? wrapLinesCanvas(measureCtx, leftEmo.note, cardW - 36) : [];
+          const rightNoteLines = rightEmo && rightEmo.note ? wrapLinesCanvas(measureCtx, rightEmo.note, cardW - 36) : [];
+          const maxNoteLines = Math.max(leftNoteLines.length, rightNoteLines.length);
+          const rowH = 88 + maxNoteLines * 24 + (maxNoteLines > 0 ? 10 : 0);
+
+          rows.push({
+            leftEmo,
+            rightEmo,
+            leftNoteLines,
+            rightNoteLines,
+            rowH
+          });
+        }
+
+        const emotionsBlockHeight = rows.length > 0
+          ? 44 + rows.reduce((acc, r) => acc + r.rowH + 16, 0) + 8
+          : 0;
+
+        measureCtx.font = "400 18px 'Plus Jakarta Sans', sans-serif";
+        const tipLines = char.tipsWarnings ? wrapLinesCanvas(measureCtx, char.tipsWarnings, innerW - 40) : [];
+        const tipsHeight = tipLines.length > 0
+          ? 56 + tipLines.length * 27 + 22
+          : 0;
+
+        const bannerH = 220;
+        const headerBottomY = bannerH + 92 + Math.max(0, (nameLines.length - 1) * 48);
+
+        let cursorY = headerBottomY + 24;
+        if (posLines.length > 0) {
+          cursorY += posLines.length * 29 + 24 + 20;
+        }
+        if (descLines.length > 0) {
+          cursorY += descLines.length * 30 + 30 + 22;
+        }
+        if (hasMusic) {
+          cursorY += musicHeight + 24;
+        }
+        if (emotionsBlockHeight > 0) {
+          cursorY += emotionsBlockHeight + 18;
+        }
+        if (tipsHeight > 0) {
+          cursorY += tipsHeight + 18;
+        }
+        const totalHeight = Math.max(680, cursorY + 64);
+
+        canvas.width = width;
+        canvas.height = totalHeight;
+        const ctx = canvas.getContext("2d");
+
+        const bgGrad = ctx.createLinearGradient(0, 0, width, totalHeight);
+        bgGrad.addColorStop(0, theme.bgStart);
+        bgGrad.addColorStop(1, theme.bgEnd);
+        ctx.fillStyle = bgGrad;
+        ctx.fillRect(0, 0, width, totalHeight);
+
+        const bodyMedia = mediaBundle.bodyFrames && mediaBundle.bodyFrames.length > 0
+          ? mediaBundle.bodyFrames[frameIdx % mediaBundle.bodyFrames.length].canvas
+          : mediaBundle.bodyImg;
+        if (bodyMedia) {
+          drawMediaCoverSafe(ctx, bodyMedia, 0, bannerH, width, totalHeight - bannerH, char.bodyBgPosition);
+          ctx.fillStyle = `rgba(9, 13, 26, ${char.bodyBgOverlay ?? 0.68})`;
+          ctx.fillRect(0, bannerH, width, totalHeight - bannerH);
+        }
+
+        const bannerMedia = mediaBundle.bannerFrames && mediaBundle.bannerFrames.length > 0
+          ? mediaBundle.bannerFrames[frameIdx % mediaBundle.bannerFrames.length].canvas
+          : mediaBundle.bannerImg;
+
+        const bannerGrad = ctx.createLinearGradient(0, 0, width, bannerH);
+        bannerGrad.addColorStop(0, theme.accent);
+        bannerGrad.addColorStop(1, theme.bgEnd);
+        ctx.fillStyle = bannerGrad;
+        ctx.fillRect(0, 0, width, bannerH);
+
+        if (bannerMedia) {
+          drawMediaCoverSafe(ctx, bannerMedia, 0, 0, width, bannerH, char.bannerPosition);
+          const scrim = ctx.createLinearGradient(0, 0, 0, bannerH);
+          scrim.addColorStop(0, "rgba(0,0,0,0.18)");
+          scrim.addColorStop(1, "rgba(9,13,26,0.52)");
+          ctx.fillStyle = scrim;
+          ctx.fillRect(0, 0, width, bannerH);
+        }
+
+        const domLabel = `Dominante: ${dominant.label} (${dominant.value}%)`;
+        ctx.font = "700 16px 'Plus Jakarta Sans', sans-serif";
+        const pillW = ctx.measureText(domLabel).width + 44;
+        const pillX = width - padX - pillW;
+        const pillY = 22;
+        ctx.fillStyle = "rgba(10, 14, 28, 0.78)";
+        drawRoundedRect(ctx, pillX, pillY, pillW, 38, 19);
+        ctx.fill();
+        ctx.strokeStyle = "rgba(255,255,255,0.16)";
+        ctx.lineWidth = 1;
+        ctx.stroke();
+
+        ctx.fillStyle = dominant.color || theme.accent;
+        ctx.beginPath();
+        ctx.arc(pillX + 18, pillY + 19, 6, 0, Math.PI * 2);
+        ctx.fill();
+
+        ctx.fillStyle = "#f8fafc";
+        ctx.fillText(domLabel, pillX + 32, pillY + 25);
+
+        const baseAvatarSize = 136;
+        const scaleFactor = Math.max(0.7, Math.min(1.45, (Number(char.avatarScale) || 100) / 100));
+        const avatarSize = Math.round(baseAvatarSize * scaleFactor);
+        const avatarX = padX;
+        const avatarY = bannerH - avatarSize / 2;
+        const avatarShape = char.avatarShape || "rounded-square";
+
+        ctx.save();
+        ctx.fillStyle = theme.surface;
+        applyAvatarShapeClip(ctx, avatarShape, avatarX, avatarY, avatarSize, avatarSize);
+        ctx.fill();
+
+        const avatarMedia = mediaBundle.avatarFrames && mediaBundle.avatarFrames.length > 0
+          ? mediaBundle.avatarFrames[frameIdx % mediaBundle.avatarFrames.length].canvas
+          : mediaBundle.avatarImg;
+
+        if (avatarMedia) {
+          ctx.save();
+          applyAvatarShapeClip(ctx, avatarShape, avatarX, avatarY, avatarSize, avatarSize);
+          ctx.clip();
+          const sw = avatarMedia.naturalWidth || avatarMedia.width || avatarSize;
+          const sh = avatarMedia.naturalHeight || avatarMedia.height || avatarSize;
+          const scale = Math.max(avatarSize / sw, avatarSize / sh);
+          const dw = sw * scale;
+          const dh = sh * scale;
+          const dx = avatarX + (avatarSize - dw) * 0.5;
+          let dy = avatarY + (avatarSize - dh) * 0.5;
+          if (char.avatarPosition === "top") dy = avatarY;
+          else if (char.avatarPosition === "bottom") dy = avatarY + (avatarSize - dh);
+          ctx.drawImage(avatarMedia, dx, dy, dw, dh);
+          ctx.restore();
+        } else {
+          ctx.save();
+          applyAvatarShapeClip(ctx, avatarShape, avatarX, avatarY, avatarSize, avatarSize);
+          ctx.clip();
+          ctx.fillStyle = theme.accent;
+          ctx.font = `800 ${Math.round(44 * scaleFactor)}px 'Plus Jakarta Sans', sans-serif`;
+          ctx.textAlign = "center";
+          ctx.textBaseline = "middle";
+          ctx.fillText(getInitials(char.name), avatarX + avatarSize / 2, avatarY + avatarSize / 2 + 2);
+          ctx.textAlign = "left";
+          ctx.textBaseline = "alphabetic";
+          ctx.restore();
+        }
+
+        ctx.strokeStyle = theme.accent;
+        ctx.lineWidth = 3;
+        applyAvatarShapeClip(ctx, avatarShape, avatarX, avatarY, avatarSize, avatarSize);
+        ctx.stroke();
+        ctx.restore();
+
+        const textLeftX = avatarX + avatarSize + 24;
+        let infoY = bannerH + 34;
+
+        if (char.title) {
+          ctx.font = "700 15px 'Plus Jakarta Sans', sans-serif";
+          const titleW = Math.min(innerW - (textLeftX - padX), ctx.measureText(char.title.toUpperCase()).width + 24);
+          ctx.fillStyle = theme.badgeBg;
+          drawRoundedRect(ctx, textLeftX, infoY - 18, titleW, 26, 8);
+          ctx.fill();
+          ctx.fillStyle = theme.badgeText;
+          ctx.fillText(char.title.toUpperCase(), textLeftX + 12, infoY);
+          infoY += 34;
+        }
+
+        ctx.font = fontObj.canvas.replace("%s", "44");
+        ctx.fillStyle = theme.text;
+        for (let i = 0; i < nameLines.length; i++) {
+          ctx.fillText(nameLines[i], textLeftX, infoY + i * 48);
+        }
+
+        let y = Math.max(avatarY + avatarSize + 24, infoY + nameLines.length * 48 + 16);
+
+        if (posLines.length > 0) {
+          const boxH = posLines.length * 29 + 22;
+          ctx.fillStyle = theme.surface;
+          drawRoundedRect(ctx, padX, y, innerW, boxH, 14);
+          ctx.fill();
+          ctx.strokeStyle = theme.border;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.fillStyle = theme.accent;
+          drawRoundedRect(ctx, padX, y + 10, 5, boxH - 20, 3);
+          ctx.fill();
+
+          ctx.font = "600 20px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = theme.text;
+          for (let i = 0; i < posLines.length; i++) {
+            ctx.fillText(posLines[i], padX + 20, y + 31 + i * 29);
+          }
+          y += boxH + 18;
+        }
+
+        if (descLines.length > 0) {
+          const descH = descLines.length * 30 + 28;
+          ctx.fillStyle = theme.surface;
+          drawRoundedRect(ctx, padX, y, innerW, descH, 16);
+          ctx.fill();
+          ctx.strokeStyle = theme.border;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.font = "400 20px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = theme.text;
+          for (let i = 0; i < descLines.length; i++) {
+            ctx.fillText(descLines[i], padX + 20, y + 32 + i * 30);
+          }
+          y += descH + 18;
+        }
+
+        if (hasMusic) {
+          ctx.fillStyle = theme.surface;
+          drawRoundedRect(ctx, padX, y, innerW, musicHeight, 18);
+          ctx.fill();
+          ctx.strokeStyle = theme.border;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.font = "700 14px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = theme.muted;
+          ctx.fillText("MÚSICA", padX + 20, y + 26);
+
+          const widgetX = padX + 20;
+          const widgetY = y + 38;
+          const widgetW = innerW - 40;
+          const widgetH = 98;
+
+          const spGrad = ctx.createLinearGradient(widgetX, widgetY, widgetX + widgetW, widgetY + widgetH);
+          spGrad.addColorStop(0, theme.accent);
+          spGrad.addColorStop(0.55, theme.bgEnd);
+          spGrad.addColorStop(1, theme.bgStart);
+          ctx.fillStyle = spGrad;
+          drawRoundedRect(ctx, widgetX, widgetY, widgetW, widgetH, 16);
+          ctx.fill();
+          ctx.strokeStyle = theme.border;
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+
+          const thumbSize = 70;
+          const thumbX = widgetX + 14;
+          const thumbY = widgetY + 14;
+          ctx.fillStyle = "rgba(10, 14, 28, 0.55)";
+          drawRoundedRect(ctx, thumbX, thumbY, thumbSize, thumbSize, 10);
+          ctx.fill();
+
+          if (mediaBundle.spotifyCoverImg && drawMediaCoverSafe(ctx, mediaBundle.spotifyCoverImg, thumbX, thumbY, thumbSize, thumbSize, "center")) {
+            // Portada dibujada correctamente
+          } else {
+            ctx.fillStyle = "#ffffff";
+            ctx.font = "800 24px 'Plus Jakarta Sans', sans-serif";
+            ctx.fillText("♪", thumbX + 24, thumbY + 44);
+          }
+
+          const spParsed = parseSpotifyUrl(char.spotifyUrl);
+          const trackTitle = char.spotifyTitle || (spParsed && spParsed.id ? `Canción en Spotify (${spParsed.kind})` : "Canción de Spotify");
+          const trackSub = char.spotifyArtist || "Spotify";
+
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "700 21px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(trackTitle.slice(0, 44), thumbX + thumbSize + 18, widgetY + 38);
+
+          ctx.fillStyle = "rgba(255,255,255,0.86)";
+          ctx.font = "500 16px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText(trackSub.slice(0, 48), thumbX + thumbSize + 18, widgetY + 64);
+
+          ctx.fillStyle = "rgba(10, 14, 28, 0.72)";
+          drawRoundedRect(ctx, thumbX + thumbSize + 18, widgetY + 72, 74, 20, 6);
+          ctx.fill();
+          ctx.fillStyle = "#ffffff";
+          ctx.font = "700 11px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillText("SPOTIFY", thumbX + thumbSize + 28, widgetY + 86);
+
+          const playCx = widgetX + widgetW - 38;
+          const playCy = widgetY + widgetH / 2;
+          ctx.fillStyle = "#ffffff";
+          ctx.beginPath();
+          ctx.arc(playCx, playCy, 20, 0, Math.PI * 2);
+          ctx.fill();
+
+          ctx.fillStyle = "#0f172a";
+          ctx.beginPath();
+          ctx.moveTo(playCx - 5, playCy - 8);
+          ctx.lineTo(playCx - 5, playCy + 8);
+          ctx.lineTo(playCx + 8, playCy);
+          ctx.closePath();
+          ctx.fill();
+
+          y += musicHeight + 18;
+        }
+
+        if (rows.length > 0) {
+          ctx.font = "800 15px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = theme.muted;
+          ctx.fillText("ESTADÍSTICAS Y EMOCIONES", padX, y + 18);
+          y += 32;
+
+          for (let r = 0; r < rows.length; r++) {
+            const row = rows[r];
+            const items = [
+              { emo: row.leftEmo, noteLines: row.leftNoteLines, x: padX },
+              { emo: row.rightEmo, noteLines: row.rightNoteLines, x: padX + cardW + colGap }
+            ];
+
+            for (let c = 0; c < items.length; c++) {
+              const item = items[c];
+              if (!item.emo) continue;
+              const pct = Math.max(0, Math.min(100, Number(item.emo.value) || 0));
+              const col = item.emo.color || theme.accent;
+
+              ctx.fillStyle = theme.surface;
+              drawRoundedRect(ctx, item.x, y, cardW, row.rowH, 16);
+              ctx.fill();
+              ctx.strokeStyle = theme.border;
+              ctx.lineWidth = 1;
+              ctx.stroke();
+
+              ctx.fillStyle = col;
+              ctx.beginPath();
+              ctx.arc(item.x + 22, y + 26, 6, 0, Math.PI * 2);
+              ctx.fill();
+
+              ctx.font = "700 18px 'Plus Jakarta Sans', sans-serif";
+              ctx.fillStyle = theme.text;
+              ctx.fillText(item.emo.label || "Emoción", item.x + 36, y + 32);
+
+              ctx.textAlign = "right";
+              ctx.fillStyle = col;
+              ctx.fillText(`${pct}%`, item.x + cardW - 18, y + 32);
+              ctx.textAlign = "left";
+
+              const barX = item.x + 18;
+              const barY = y + 48;
+              const barW = cardW - 36;
+              const barH = 10;
+              ctx.fillStyle = "rgba(255, 255, 255, 0.1)";
+              drawRoundedRect(ctx, barX, barY, barW, barH, 5);
+              ctx.fill();
+
+              const fillW = Math.max(0, (barW * pct) / 100);
+              if (fillW > 0) {
+                ctx.fillStyle = col;
+                drawRoundedRect(ctx, barX, barY, fillW, barH, 5);
+                ctx.fill();
+              }
+
+              if (item.noteLines.length > 0) {
+                ctx.font = "400 16px 'Plus Jakarta Sans', sans-serif";
+                ctx.fillStyle = theme.muted;
+                for (let n = 0; n < item.noteLines.length; n++) {
+                  ctx.fillText(item.noteLines[n], item.x + 18, y + 82 + n * 24);
+                }
+              }
+            }
+
+            y += row.rowH + 16;
+          }
+        }
+
+        if (tipLines.length > 0) {
+          ctx.fillStyle = theme.surface;
+          drawRoundedRect(ctx, padX, y, innerW, tipsHeight, 16);
+          ctx.fill();
+          ctx.strokeStyle = theme.border;
+          ctx.lineWidth = 1;
+          ctx.stroke();
+
+          ctx.font = "800 14px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = theme.muted;
+          ctx.fillText("ADVERTENCIAS Y CONSEJOS", padX + 20, y + 28);
+
+          ctx.font = "400 18px 'Plus Jakarta Sans', sans-serif";
+          ctx.fillStyle = theme.text;
+          for (let i = 0; i < tipLines.length; i++) {
+            ctx.fillText(tipLines[i], padX + 20, y + 56 + i * 27);
+          }
+        }
+
+        const overlays = Array.isArray(char.overlays) ? char.overlays : [];
+        const overlayAssets = mediaBundle.overlayAssets || [];
+        for (let i = 0; i < overlays.length; i++) {
+          const ov = overlays[i];
+          const asset = overlayAssets[i];
+          if (!asset) continue;
+          const mediaSource = asset.frames && asset.frames.length > 0
+            ? asset.frames[frameIdx % asset.frames.length].canvas
+            : asset.img;
+          if (!mediaSource) continue;
+
+          const sw = mediaSource.naturalWidth || mediaSource.videoWidth || mediaSource.width || 120;
+          const sh = mediaSource.naturalHeight || mediaSource.videoHeight || mediaSource.height || 120;
+          const aspect = sw > 0 && sh > 0 ? sh / sw : 1;
+          const drawW = Math.max(24, Math.min(440, (Number(ov.size) || 88) * 1.45));
+          const drawH = drawW * aspect;
+          const centerX = ((Number(ov.x) || 50) / 100) * width;
+          const centerY = ((Number(ov.y) || 50) / 100) * totalHeight;
+          const drawX = centerX - drawW * 0.5;
+          const drawY = centerY - drawH * 0.5;
+
+          try {
+            ctx.save();
+            ctx.drawImage(mediaSource, drawX, drawY, drawW, drawH);
+            ctx.restore();
+          } catch (_err) {
+            // Omitir si el recurso bloquea lectura en canvas
+          }
+        }
+      }
+
+      async function loadImageSafe(src) {
+        if (!src) return null;
+        return new Promise((resolve) => {
+          const img = new Image();
+          if (!src.startsWith("data:")) img.crossOrigin = "anonymous";
+          img.onload = () => {
+            try {
+              const testCanvas = document.createElement("canvas");
+              testCanvas.width = 4;
+              testCanvas.height = 4;
+              const tctx = testCanvas.getContext("2d");
+              tctx.drawImage(img, 0, 0, 4, 4);
+              tctx.getImageData(0, 0, 1, 1);
+              resolve(img);
+            } catch (_corsErr) {
+              resolve(null);
+            }
+          };
+          img.onerror = () => resolve(null);
+          img.src = src;
+        });
+      }
+
+      async function buildMediaBundleForExport(char) {
+        const overlays = Array.isArray(char.overlays) ? char.overlays : [];
+        const [avatarFrames, bannerFrames, bodyFrames, avatarImg, bannerImg, bodyImg, spotifyCoverImg, overlayAssets] = await Promise.all([
+          isGifMedia(char.avatarUrl) ? decodeAnimatedGifFrames(char.avatarUrl, 14) : Promise.resolve(null),
+          isGifMedia(char.bannerUrl) ? decodeAnimatedGifFrames(char.bannerUrl, 14) : Promise.resolve(null),
+          isGifMedia(char.bodyBgUrl) ? decodeAnimatedGifFrames(char.bodyBgUrl, 14) : Promise.resolve(null),
+          !isGifMedia(char.avatarUrl) ? loadImageSafe(char.avatarUrl) : Promise.resolve(null),
+          !isGifMedia(char.bannerUrl) ? loadImageSafe(char.bannerUrl) : Promise.resolve(null),
+          !isGifMedia(char.bodyBgUrl) ? loadImageSafe(char.bodyBgUrl) : Promise.resolve(null),
+          loadImageSafe(char.spotifyCover),
+          Promise.all(
+            overlays.map(async (ov) => {
+              if (!ov || !ov.url) return { frames: null, img: null };
+              if (isGifMedia(ov.url)) {
+                const frames = await decodeAnimatedGifFrames(ov.url, 14);
+                return { frames, img: null };
+              }
+              const img = await loadImageSafe(ov.url);
+              return { frames: null, img };
+            })
+          )
+        ]);
+
+        return {
+          avatarFrames,
+          bannerFrames,
+          bodyFrames,
+          avatarImg,
+          bannerImg,
+          bodyImg,
+          spotifyCoverImg,
+          overlayAssets
+        };
+      }
+
+      /* =====================================================================
+         8. ESTADO INICIAL DE LA APLICACIÓN Y VISTAS
+         ===================================================================== */
+      const sharedCharacterFromUrl = decodeShareFromHash();
+      let globalMeta = loadGlobalMeta();
+      let appState = loadAccountData(globalMeta.currentAccount);
+
+      const uiState = {
+        viewMode: sharedCharacterFromUrl ? "shared" : "editor",
+        sharedCharacter: sharedCharacterFromUrl,
+        shareModalOpen: false,
+        accountModalOpen: false,
+        statusMessage: "",
+        isExporting: false,
+        exportProgressText: "",
+        newOverlayUrl: "",
+        newOverlaySize: 88
+      };
+
+      function applyPageTheme(themeId) {
+        const t = getThemeById(themeId);
+        const root = document.documentElement;
+        root.style.setProperty("--page-bg-start", t.bgStart);
+        root.style.setProperty("--page-bg-end", t.bgEnd);
+        root.style.setProperty("--page-accent", t.accent);
+        root.style.setProperty("--page-glow", t.glow);
+      }
+
+      function getActiveCharacter() {
+        if (uiState.viewMode === "shared" && uiState.sharedCharacter) {
+          return uiState.sharedCharacter;
+        }
+        const found = appState.characters.find((c) => c.id === appState.selectedId);
+        return found || appState.characters[0];
+      }
+
+      function updateActiveCharacter(mutator, shouldRender) {
+        if (uiState.viewMode === "shared") return;
+        const idx = appState.characters.findIndex((c) => c.id === appState.selectedId);
+        if (idx === -1) return;
+        const updated = { ...appState.characters[idx] };
+        mutator(updated);
+        appState.characters[idx] = normalizeCharacter(updated, idx);
+        persistAccountData(appState, false);
+        if (shouldRender !== false) {
+          renderApp();
+        }
+      }
+
+      function setNotice(msg) {
+        uiState.statusMessage = msg;
+        renderApp();
+        if (msg) {
+          window.clearTimeout(window.__noticeTimer);
+          window.__noticeTimer = window.setTimeout(() => {
+            uiState.statusMessage = "";
+            renderApp();
+          }, 3600);
+        }
+      }
+
+      function readFileAsDataUrl(file) {
+        return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(String(reader.result || ""));
+          reader.onerror = () => reject(new Error("No se pudo leer el archivo"));
+          reader.readAsDataURL(file);
+        });
+      }
+
+      async function handleExportCard(char) {
+        if (uiState.isExporting) return;
+        uiState.isExporting = true;
+        uiState.exportProgressText = "Preparando medios y lienzo...";
+        renderApp();
+
+        try {
+          const bundle = await buildMediaBundleForExport(char);
+          const canvas = document.createElement("canvas");
+          const animated = hasAnyGif(char);
+
+          if (animated) {
+            const overlayFrameLists = (bundle.overlayAssets || [])
+              .map((a) => a && a.frames)
+              .filter((arr) => Array.isArray(arr) && arr.length > 0);
+            const frameLists = [bundle.avatarFrames, bundle.bannerFrames, bundle.bodyFrames, ...overlayFrameLists].filter(
+              (arr) => Array.isArray(arr) && arr.length > 0
+            );
+            const maxLen = frameLists.reduce((m, arr) => Math.max(m, arr.length), 1);
+            const totalFrames = Math.max(6, Math.min(14, maxLen));
+            const framesWithDelays = [];
+
+            for (let f = 0; f < totalFrames; f++) {
+              uiState.exportProgressText = `Renderizando cuadro GIF ${f + 1} de ${totalFrames}...`;
+              renderCardToCanvas(canvas, char, bundle, f);
+              const ctx = canvas.getContext("2d");
+              const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+
+              let delayCs = 10;
+              for (let k = 0; k < frameLists.length; k++) {
+                const fr = frameLists[k][f % frameLists[k].length];
+                if (fr && fr.delayCs) {
+                  delayCs = fr.delayCs;
+                  break;
+                }
+              }
+
+              framesWithDelays.push({
+                rgba: imgData.data,
+                delayCs
+              });
+            }
+
+            uiState.exportProgressText = "Codificando archivo GIF animado...";
+            renderApp();
+            const gifBlob = encodeAnimatedGif(canvas.width, canvas.height, framesWithDelays);
+            const url = URL.createObjectURL(gifBlob);
+            const a = document.createElement("a");
+            const safeName = (char.name || "personaje").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+            a.href = url;
+            a.download = `${safeName}-tarjeta.gif`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+            setNotice(`GIF animado exportado (${totalFrames} cuadros) para ${char.name}.`);
+          } else {
+            renderCardToCanvas(canvas, char, bundle, 0);
+            canvas.toBlob((blob) => {
+              if (!blob) {
+                setNotice("No se pudo generar la imagen PNG.");
+                return;
+              }
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              const safeName = (char.name || "personaje").toLowerCase().replace(/[^a-z0-9]+/g, "-");
+              a.href = url;
+              a.download = `${safeName}-tarjeta.png`;
+              document.body.appendChild(a);
+              a.click();
+              a.remove();
+              window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+              setNotice(`Tarjeta PNG exportada para ${char.name}.`);
+            }, "image/png");
+          }
+        } catch (_err) {
+          setNotice("Ocurrió un error al exportar la tarjeta. Revisa si alguna imagen externa bloquea el acceso.");
+        } finally {
+          uiState.isExporting = false;
+          uiState.exportProgressText = "";
+          renderApp();
+        }
+      }
+
+      async function copyShareLink(char) {
+        try {
+          const link = encodeSharePayload(char);
+          if (navigator.clipboard && typeof navigator.clipboard.writeText === "function") {
+            await navigator.clipboard.writeText(link);
+          } else {
+            const temp = document.createElement("textarea");
+            temp.value = link;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand("copy");
+            temp.remove();
+          }
+          setNotice("Enlace #share= copiado con tema, medios, adornos y emociones.");
+        } catch (_err) {
+          setNotice("No se pudo copiar automáticamente; puedes copiar el enlace desde el campo.");
+        }
+      }
+
+      function escapeHtml(str) {
+        return String(str || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function renderMediaThumb(src, pos, fallbackInitials, isRoundedFull) {
+        const alignCss = getObjectPositionCss(pos);
+        const shapeCls = isRoundedFull ? "rounded-2xl" : "rounded-xl";
+        if (src) {
+          return `<img src="${escapeHtml(src)}" alt="Vista previa" style="object-position:${alignCss}" class="w-full h-full object-cover ${shapeCls}" />`;
+        }
+        return `<div class="w-full h-full flex items-center justify-center bg-slate-800/80 text-slate-300 font-bold text-sm ${shapeCls}">${escapeHtml(fallbackInitials || "IMG")}</div>`;
+      }
+
+      function renderMusicWidgetHtml(char, theme) {
+        const hasMusic = Boolean(char.spotifyUrl || char.spotifyTitle);
+        if (!hasMusic) return "";
+        const parsed = parseSpotifyUrl(char.spotifyUrl);
+        const title = char.spotifyTitle || (parsed && parsed.id ? `Canción de Spotify (${parsed.kind})` : "Canción en Spotify");
+        const subtitle = char.spotifyArtist || "Spotify";
+        const href = (parsed && parsed.url) || "#";
+
+        return `
+          <div class="mt-4">
+            <div class="text-xs font-extrabold uppercase tracking-wider mb-2" style="color:${theme.muted}">Música</div>
+            <a href="${escapeHtml(href)}" target="_blank" rel="noopener noreferrer"
+               class="flex items-center justify-between gap-3 p-3 rounded-2xl border transition hover:brightness-105"
+               style="background:linear-gradient(115deg, ${theme.accent} 0%, ${theme.bgEnd} 58%, ${theme.bgStart} 100%); border-color:${theme.border}; color:#ffffff;">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-14 h-14 rounded-xl overflow-hidden shrink-0 bg-slate-950/50 flex items-center justify-center">
+                  ${
+                    char.spotifyCover
+                      ? `<img src="${escapeHtml(char.spotifyCover)}" alt="${escapeHtml(title)}" class="w-full h-full object-cover" />`
+                      : `<span class="text-xl font-black">♪</span>`
+                  }
+                </div>
+                <div class="min-w-0">
+                  <div class="font-bold text-base truncate text-white">${escapeHtml(title)}</div>
+                  <div class="text-xs sm:text-sm truncate text-white/85">${escapeHtml(subtitle)}</div>
+                  <div class="inline-block mt-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider bg-slate-950/60 text-white">Spotify</div>
+                </div>
+              </div>
+              <div class="w-10 h-10 rounded-full bg-white text-slate-950 flex items-center justify-center shrink-0 shadow">
+                <span class="ml-0.5 text-sm font-black">▶</span>
+              </div>
+            </a>
+          </div>
+        `;
+      }
+
+      function renderOverlaysLayerHtml(char, interactive) {
+        const overlays = Array.isArray(char.overlays) ? char.overlays : [];
+        if (overlays.length === 0) return "";
+        return `
+          <div class="absolute inset-0 z-20 pointer-events-none overflow-hidden" data-overlay-canvas>
+            ${overlays
+              .map((ov, index) => {
+                const px = Math.max(0, Math.min(100, Number(ov.x) || 50));
+                const py = Math.max(0, Math.min(100, Number(ov.y) || 50));
+                const sz = Math.max(24, Math.min(280, Number(ov.size) || 88));
+                return `
+                  <div data-overlay-id="${escapeHtml(ov.id)}"
+                       style="left:${px}%; top:${py}%; width:${sz}px; transform:translate(-50%, -50%);"
+                       class="absolute select-none ${
+                         interactive ? "pointer-events-auto cursor-grab active:cursor-grabbing group" : ""
+                       }">
+                    <img src="${escapeHtml(ov.url)}" alt="Adorno ${index + 1}"
+                         draggable="false"
+                         class="w-full h-auto object-contain block drop-shadow-lg pointer-events-none" />
+                    ${
+                      interactive
+                        ? `<span class="hidden group-hover:flex items-center justify-center w-5 h-5 rounded-full bg-slate-950/85 text-white text-[10px] font-bold border border-white/25 mx-auto mt-1">
+                             ${index + 1}
+                           </span>`
+                        : ""
+                    }
+                  </div>
+                `;
+              })
+              .join("")}
+          </div>
+        `;
+      }
+
+      function renderCharacterCardDisplay(char, options) {
+        const opts = options || {};
+        const theme = getThemeById(char.themeId);
+        const font = getFontById(char.nameFontId);
+        const dominant = getDominantEmotion(char.emotions);
+        const emotions = Array.isArray(char.emotions) ? char.emotions : [];
+        const baseBoxPx = 112;
+        const scalePct = Math.max(70, Math.min(145, Number(char.avatarScale) || 100));
+        const boxPx = Math.round((baseBoxPx * scalePct) / 100);
+        const shape = char.avatarShape || "rounded-square";
+        const clipCss = getAvatarClipPathCss(shape);
+
+        return `
+          <article class="relative rounded-3xl overflow-hidden shadow-2xl border transition"
+                   style="background:linear-gradient(160deg, ${theme.bgStart} 0%, ${theme.bgEnd} 100%); border-color:${theme.border}; color:${theme.text};">
+            ${renderOverlaysLayerHtml(char, Boolean(opts.interactiveOverlays))}
+
+            <div class="relative w-full h-44 sm:h-52 overflow-hidden"
+                 style="background:linear-gradient(120deg, ${theme.accent} 0%, ${theme.bgEnd} 100%);">
+              ${
+                char.bannerUrl
+                  ? `<img src="${escapeHtml(char.bannerUrl)}" alt="Portada de ${escapeHtml(char.name)}"
+                          style="object-position:${getObjectPositionCss(char.bannerPosition)}"
+                          class="w-full h-full object-cover block" />`
+                  : ""
+              }
+              <div class="absolute inset-0 bg-gradient-to-t from-black/55 via-black/15 to-transparent pointer-events-none"></div>
+              <div class="absolute top-3 right-3 px-3 py-1.5 rounded-full text-xs font-bold flex items-center gap-2 bg-slate-950/75 text-white border border-white/15 backdrop-blur-sm">
+                <span class="w-2.5 h-2.5 rounded-full inline-block" style="background:${dominant.color || theme.accent}"></span>
+                <span>Dominante: ${escapeHtml(dominant.label)} (${escapeHtml(String(dominant.value))}%)</span>
+              </div>
+            </div>
+
+            <div class="relative p-5 sm:p-7">
+              ${
+                char.bodyBgUrl
+                  ? `<img src="${escapeHtml(char.bodyBgUrl)}" alt="Fondo de tarjeta"
+                          style="object-position:${getObjectPositionCss(char.bodyBgPosition)}"
+                          class="absolute inset-0 w-full h-full object-cover pointer-events-none" />
+                     <div class="absolute inset-0 pointer-events-none"
+                          style="background:rgba(9, 13, 26, ${char.bodyBgOverlay ?? 0.68})"></div>`
+                  : ""
+              }
+
+              <div class="relative z-10">
+                <div class="flex flex-col sm:flex-row sm:items-end justify-between gap-4 -mt-16 sm:-mt-20 mb-5">
+                  <div class="flex items-end gap-4 min-w-0">
+                    <div style="width:${boxPx}px; height:${boxPx}px; clip-path:${clipCss}; -webkit-clip-path:${clipCss}; background:${theme.surface};"
+                         class="overflow-hidden shrink-0 shadow-xl flex items-center justify-center">
+                      ${
+                        char.avatarUrl
+                          ? `<img src="${escapeHtml(char.avatarUrl)}" alt="${escapeHtml(char.name)}"
+                                  style="object-position:${getObjectPositionCss(char.avatarPosition)}"
+                                  class="w-full h-full object-cover" />`
+                          : `<span class="text-2xl sm:text-3xl font-extrabold" style="color:${theme.accent}">${escapeHtml(getInitials(char.name))}</span>`
+                      }
+                    </div>
+                    <div class="min-w-0 pt-10 sm:pt-12">
+                      ${
+                        char.title
+                          ? `<span class="inline-block px-2.5 py-0.5 rounded-md text-[11px] font-bold uppercase tracking-wider mb-1"
+                                   style="background:${theme.badgeBg}; color:${theme.badgeText}">${escapeHtml(char.title)}</span>`
+                          : ""
+                      }
+                      <h2 class="text-2xl sm:text-4xl leading-tight break-words"
+                          style="font-family:${font.css}; font-style:${font.italic ? "italic" : "normal"}; color:${theme.text}">
+                        ${escapeHtml(char.name || "Personaje")}
+                      </h2>
+                    </div>
+                  </div>
+
+                  ${
+                    opts.showActions !== false
+                      ? `<div class="flex flex-wrap items-center gap-2">
+                           <button type="button" data-action="open-share-modal"
+                                   class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white border border-white/15 transition cursor-pointer">
+                             Compartir Tarjeta
+                           </button>
+                           ${
+                             opts.onEditLabel
+                               ? `<button type="button" data-action="switch-to-editor"
+                                          class="px-3.5 py-2 rounded-xl text-xs font-bold transition cursor-pointer"
+                                          style="background:${theme.accent}; color:#090d1a">
+                                    ${escapeHtml(opts.onEditLabel)}
+                                  </button>`
+                               : ""
+                           }
+                         </div>`
+                      : ""
+                  }
+                </div>
+
+                ${
+                  char.position
+                    ? `<div class="mb-4 px-4 py-3 rounded-2xl border-l-4"
+                            style="background:${theme.surface}; border-color:${theme.accent}; border-top:1px solid ${theme.border}; border-right:1px solid ${theme.border}; border-bottom:1px solid ${theme.border}">
+                         <div class="text-sm sm:text-base font-semibold leading-snug" style="color:${theme.text}">
+                           Posición actual: ${escapeHtml(char.position)}
+                         </div>
+                       </div>`
+                    : ""
+                }
+
+                ${
+                  char.description
+                    ? `<div class="px-4 py-3.5 rounded-2xl border"
+                            style="background:${theme.surface}; border-color:${theme.border}">
+                         <p class="text-sm sm:text-base leading-relaxed whitespace-pre-line m-0" style="color:${theme.text}">
+                           ${escapeHtml(char.description)}
+                         </p>
+                       </div>`
+                    : ""
+                }
+
+                ${renderMusicWidgetHtml(char, theme)}
+
+                ${
+                  emotions.length > 0
+                    ? `<div class="mt-6">
+                         <div class="text-xs font-extrabold uppercase tracking-wider mb-3" style="color:${theme.muted}">
+                           Estadísticas y Emociones
+                         </div>
+                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+                           ${emotions
+                             .map((emo) => {
+                               const pct = Math.max(0, Math.min(100, Number(emo.value) || 0));
+                               const col = emo.color || theme.accent;
+                               return `
+                                 <div class="p-4 rounded-2xl border" style="background:${theme.surface}; border-color:${theme.border}">
+                                   <div class="flex items-center justify-between gap-2 mb-2">
+                                     <div class="flex items-center gap-2 min-w-0">
+                                       <span class="w-2.5 h-2.5 rounded-full shrink-0" style="background:${col}"></span>
+                                       <span class="font-bold text-sm sm:text-base truncate" style="color:${theme.text}">${escapeHtml(emo.label)}</span>
+                                     </div>
+                                     <span class="font-extrabold text-sm shrink-0" style="color:${col}">${pct}%</span>
+                                   </div>
+                                   <div class="w-full h-2.5 rounded-full overflow-hidden bg-white/10">
+                                     <div class="h-full rounded-full transition-all duration-300" style="width:${pct}%; background:${col}"></div>
+                                   </div>
+                                   ${
+                                     emo.note
+                                       ? `<p class="mt-2.5 mb-0 text-xs sm:text-sm leading-relaxed" style="color:${theme.muted}">${escapeHtml(emo.note)}</p>`
+                                       : ""
+                                   }
+                                 </div>
+                               `;
+                             })
+                             .join("")}
+                         </div>
+                       </div>`
+                    : ""
+                }
+
+                ${
+                  char.tipsWarnings
+                    ? `<div class="mt-5 p-4 rounded-2xl border" style="background:${theme.surface}; border-color:${theme.border}">
+                         <div class="text-xs font-extrabold uppercase tracking-wider mb-1.5" style="color:${theme.muted}">
+                           Advertencias y Consejos
+                         </div>
+                         <p class="m-0 text-xs sm:text-sm leading-relaxed whitespace-pre-line" style="color:${theme.text}">
+                           ${escapeHtml(char.tipsWarnings)}
+                         </p>
+                       </div>`
+                    : ""
+                }
+              </div>
+            </div>
+          </article>
+        `;
+      }
+
+      function renderEditorView(char) {
+        const theme = getThemeById(char.themeId);
+        const font = getFontById(char.nameFontId);
+        const overlays = Array.isArray(char.overlays) ? char.overlays : [];
+
+        return `
+          <div class="grid grid-cols-1 xl:grid-cols-12 gap-6 items-start">
+            <section class="xl:col-span-7 glass-panel rounded-3xl p-5 sm:p-6 space-y-6">
+              <div class="flex flex-wrap items-center justify-between gap-3 border-b border-white/10 pb-4">
+                <div>
+                  <h1 class="text-lg sm:text-xl font-extrabold text-white">Editor de Personaje y Emociones</h1>
+                  <p class="text-xs text-slate-400">Todo se refleja al instante y viaja en el enlace #share=</p>
+                </div>
+                <div class="flex flex-wrap items-center gap-2">
+                  <button type="button" data-action="switch-to-final"
+                          class="px-3.5 py-2 rounded-xl text-xs font-bold bg-indigo-500/20 hover:bg-indigo-500/30 text-indigo-200 border border-indigo-400/30 transition cursor-pointer">
+                    Ver Pantalla Final
+                  </button>
+                  <button type="button" data-action="open-share-modal"
+                          class="px-3.5 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white transition cursor-pointer">
+                    Compartir / Exportar
+                  </button>
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Identidad y Tipografía</div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Nombre del personaje</label>
+                    <input type="text" data-field="name" value="${escapeHtml(char.name)}"
+                           placeholder="Ej. Kaelen Vance"
+                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-sm text-white focus:outline-none focus:border-violet-400" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Título / Arquetipo</label>
+                    <input type="text" data-field="title" value="${escapeHtml(char.title)}"
+                           placeholder="Ej. Explorador Astral"
+                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-sm text-white focus:outline-none focus:border-violet-400" />
+                  </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Tipografía del nombre (18 opciones)</label>
+                    <select data-field="nameFontId"
+                            class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-sm text-white focus:outline-none focus:border-violet-400">
+                      ${NAME_FONTS.map(
+                        (f) => `<option value="${f.id}" ${char.nameFontId === f.id ? "selected" : ""}>${escapeHtml(f.label)}</option>`
+                      ).join("")}
+                    </select>
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1.5">Posición actual (rol en la relación)</label>
+                    <input type="text" data-field="position" value="${escapeHtml(char.position)}"
+                           placeholder="Ej. Confidente Principal"
+                           class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-sm text-white focus:outline-none focus:border-violet-400" />
+                  </div>
+                </div>
+
+                <div class="p-3 rounded-2xl bg-slate-900/70 border border-white/10 flex items-center justify-between gap-3">
+                  <span class="text-xs text-slate-400">Vista previa del nombre:</span>
+                  <span class="text-xl sm:text-2xl truncate"
+                        style="font-family:${font.css}; font-style:${font.italic ? "italic" : "normal"}; color:${theme.text}">
+                    ${escapeHtml(char.name || "Personaje")}
+                  </span>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between">
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Color de la tarjeta compartida (20 gamas)</span>
+                  <span class="text-xs font-bold" style="color:${theme.accent}">${escapeHtml(theme.name)}</span>
+                </div>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                  ${CARD_THEMES.map((t) => {
+                    const active = char.themeId === t.id;
+                    return `
+                      <button type="button" data-action="select-card-theme" data-theme-id="${t.id}"
+                              class="flex items-center gap-2 p-2 rounded-xl border text-left transition cursor-pointer ${
+                                active ? "border-white bg-white/15" : "border-white/10 bg-slate-900/60 hover:bg-slate-800/80"
+                              }">
+                        <span class="w-5 h-5 rounded-lg shrink-0 border border-white/25"
+                              style="background:linear-gradient(135deg, ${t.bgStart}, ${t.accent})"></span>
+                        <span class="text-xs font-semibold truncate text-slate-100">${escapeHtml(t.name)}</span>
+                      </button>
+                    `;
+                  }).join("")}
+                </div>
+              </div>
+
+              <div class="space-y-4">
+                <div class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                  Portada, Perfil y Fondo de Tarjeta (Foto o GIF)
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-900/75 border border-white/10 space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-bold text-white">Portada superior (Banner / GIF)</span>
+                    ${
+                      char.bannerUrl
+                        ? `<button type="button" data-action="clear-media" data-target="bannerUrl"
+                                   class="text-xs font-semibold text-rose-300 hover:text-rose-200 cursor-pointer">Quitar portada</button>`
+                        : ""
+                    }
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-24 h-14 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-white/10">
+                      ${renderMediaThumb(char.bannerUrl, char.bannerPosition, "BAN", false)}
+                    </div>
+                    <div class="flex-1 space-y-2 min-w-0">
+                      <input type="text" data-field="bannerUrl" value="${escapeHtml(char.bannerUrl)}"
+                             placeholder="Pega enlace de imagen o .gif..."
+                             class="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-400" />
+                      <div class="flex flex-wrap items-center gap-2">
+                        <label class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200 cursor-pointer">
+                          Subir archivo / GIF
+                          <input type="file" accept="image/*" data-upload="bannerUrl" class="hidden" />
+                        </label>
+                        <select data-field="bannerPosition"
+                                class="px-2.5 py-1.5 rounded-lg bg-slate-950/80 border border-white/10 text-xs text-slate-200">
+                          <option value="top" ${char.bannerPosition === "top" ? "selected" : ""}>Encuadre: Arriba</option>
+                          <option value="center" ${char.bannerPosition === "center" ? "selected" : ""}>Encuadre: Centro</option>
+                          <option value="bottom" ${char.bannerPosition === "bottom" ? "selected" : ""}>Encuadre: Abajo</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-900/75 border border-white/10 space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-bold text-white">Foto o GIF de perfil</span>
+                    ${
+                      char.avatarUrl
+                        ? `<button type="button" data-action="clear-media" data-target="avatarUrl"
+                                   class="text-xs font-semibold text-rose-300 hover:text-rose-200 cursor-pointer">Quitar foto</button>`
+                        : ""
+                    }
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div style="clip-path:${getAvatarClipPathCss(char.avatarShape || "rounded-square")}; -webkit-clip-path:${getAvatarClipPathCss(char.avatarShape || "rounded-square")};"
+                         class="w-16 h-16 overflow-hidden bg-slate-800 shrink-0">
+                      ${renderMediaThumb(char.avatarUrl, char.avatarPosition, getInitials(char.name), false)}
+                    </div>
+                    <div class="flex-1 space-y-2.5 min-w-0">
+                      <input type="text" data-field="avatarUrl" value="${escapeHtml(char.avatarUrl)}"
+                             placeholder="Pega enlace de foto o .gif de perfil..."
+                             class="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-400" />
+                      <div class="flex flex-wrap items-center gap-2">
+                        <label class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200 cursor-pointer">
+                          Subir foto / GIF
+                          <input type="file" accept="image/*" data-upload="avatarUrl" class="hidden" />
+                        </label>
+                        <select data-field="avatarPosition"
+                                class="px-2.5 py-1.5 rounded-lg bg-slate-950/80 border border-white/10 text-xs text-slate-200">
+                          <option value="top" ${char.avatarPosition === "top" ? "selected" : ""}>Encuadre: Arriba</option>
+                          <option value="center" ${char.avatarPosition === "center" ? "selected" : ""}>Encuadre: Centro</option>
+                          <option value="bottom" ${char.avatarPosition === "bottom" ? "selected" : ""}>Encuadre: Abajo</option>
+                        </select>
+                      </div>
+
+                      <div class="flex flex-wrap items-center gap-1.5 pt-1">
+                        <span class="text-[11px] font-bold text-slate-400 mr-1">Forma:</span>
+                        ${AVATAR_SHAPES.map((sh) => {
+                          const active = (char.avatarShape || "rounded-square") === sh;
+                          return `
+                            <button type="button" data-action="select-avatar-shape" data-shape="${sh}"
+                                    class="px-2.5 py-1 rounded-lg text-[11px] font-bold border transition cursor-pointer ${
+                                      active
+                                        ? "bg-violet-600 text-white border-violet-400"
+                                        : "bg-slate-950/80 text-slate-300 border-white/10 hover:bg-slate-800"
+                                    }">
+                              ${escapeHtml(getAvatarShapeLabel(sh))}
+                            </button>
+                          `;
+                        }).join("")}
+                      </div>
+
+                      <div class="flex items-center gap-2.5 pt-0.5">
+                        <span class="text-[11px] font-bold text-slate-400">Tamaño foto:</span>
+                        <input type="range" min="70" max="145" step="5" data-field="avatarScale"
+                               value="${escapeHtml(String(char.avatarScale || 100))}"
+                               class="w-28 accent-violet-400" />
+                        <span class="text-xs font-extrabold text-violet-300" data-avatar-scale-label>${escapeHtml(String(char.avatarScale || 100))}%</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-900/75 border border-white/10 space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <span class="text-sm font-bold text-white">Fondo del cuerpo de la tarjeta (Foto o GIF)</span>
+                    ${
+                      char.bodyBgUrl
+                        ? `<button type="button" data-action="clear-media" data-target="bodyBgUrl"
+                                   class="text-xs font-semibold text-rose-300 hover:text-rose-200 cursor-pointer">Quitar fondo</button>`
+                        : ""
+                    }
+                  </div>
+                  <div class="flex items-center gap-3">
+                    <div class="w-24 h-14 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-white/10">
+                      ${renderMediaThumb(char.bodyBgUrl, char.bodyBgPosition, "BG", false)}
+                    </div>
+                    <div class="flex-1 space-y-2 min-w-0">
+                      <input type="text" data-field="bodyBgUrl" value="${escapeHtml(char.bodyBgUrl)}"
+                             placeholder="Pega enlace de imagen o .gif para el fondo..."
+                             class="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-400" />
+                      <div class="flex flex-wrap items-center gap-2">
+                        <label class="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/15 text-xs font-semibold text-slate-200 cursor-pointer">
+                          Subir fondo / GIF
+                          <input type="file" accept="image/*" data-upload="bodyBgUrl" class="hidden" />
+                        </label>
+                        <select data-field="bodyBgPosition"
+                                class="px-2.5 py-1.5 rounded-lg bg-slate-950/80 border border-white/10 text-xs text-slate-200">
+                          <option value="top" ${char.bodyBgPosition === "top" ? "selected" : ""}>Encuadre: Arriba</option>
+                          <option value="center" ${char.bodyBgPosition === "center" ? "selected" : ""}>Encuadre: Centro</option>
+                          <option value="bottom" ${char.bodyBgPosition === "bottom" ? "selected" : ""}>Encuadre: Abajo</option>
+                        </select>
+                        <label class="text-xs text-slate-300 flex items-center gap-1.5">
+                          <span>Oscurecer:</span>
+                          <input type="range" min="0.25" max="0.9" step="0.05" data-field="bodyBgOverlay"
+                                 value="${escapeHtml(String(char.bodyBgOverlay ?? 0.68))}" class="w-20 accent-violet-400" />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="p-4 rounded-2xl bg-slate-900/75 border border-white/10 space-y-3">
+                  <div class="flex items-center justify-between gap-2">
+                    <div>
+                      <span class="text-sm font-bold text-white">GIFs o imágenes sobre la tarjeta</span>
+                      <p class="text-[11px] text-slate-400">Arrástralos en la vista previa o ajusta su posición y tamaño; viajan en #share= y en la descarga.</p>
+                    </div>
+                    <span class="text-xs font-bold text-violet-300">${overlays.length}</span>
+                  </div>
+
+                  <div class="flex flex-col sm:flex-row gap-2">
+                    <input type="text" id="new-overlay-url-input" value="${escapeHtml(uiState.newOverlayUrl)}"
+                           placeholder="Pega enlace de GIF o imagen para colocar sobre la tarjeta..."
+                           class="flex-1 px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-400" />
+                    <div class="flex items-center gap-2 shrink-0">
+                      <button type="button" data-action="add-overlay-url"
+                              class="px-3.5 py-2 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white cursor-pointer">
+                        + Añadir
+                      </button>
+                      <label class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-slate-200 cursor-pointer">
+                        Subir GIF / Imagen
+                        <input type="file" accept="image/*" data-upload="overlay" class="hidden" />
+                      </label>
+                    </div>
+                  </div>
+
+                  ${
+                    overlays.length > 0
+                      ? `<div class="space-y-2.5 pt-1">
+                           ${overlays
+                             .map((ov, idx) => {
+                               return `
+                                 <div class="p-3 rounded-xl bg-slate-950/75 border border-white/10 space-y-2.5" data-ov-row="${escapeHtml(ov.id)}">
+                                   <div class="flex items-center justify-between gap-2">
+                                     <div class="flex items-center gap-2.5 min-w-0">
+                                       <img src="${escapeHtml(ov.url)}" alt="Adorno ${idx + 1}"
+                                            class="w-10 h-10 rounded-lg object-contain bg-slate-900 border border-white/10 shrink-0" />
+                                       <div class="min-w-0">
+                                         <div class="text-xs font-bold text-white">Elemento #${idx + 1} ${isGifMedia(ov.url) ? "• GIF" : "• Imagen"}</div>
+                                         <div class="text-[11px] text-slate-400">Posición: ${Math.round(ov.x)}% X, ${Math.round(ov.y)}% Y</div>
+                                       </div>
+                                     </div>
+                                     <button type="button" data-action="remove-overlay" data-overlay-id="${escapeHtml(ov.id)}"
+                                             class="px-2.5 py-1 rounded-lg text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 cursor-pointer">
+                                       Quitar
+                                     </button>
+                                   </div>
+
+                                   <div class="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+                                     <label class="text-[11px] text-slate-300 flex flex-col gap-1">
+                                       <span>Horizontal (X): ${Math.round(ov.x)}%</span>
+                                       <input type="range" min="0" max="100" step="1" data-ov-field="x" data-overlay-id="${escapeHtml(ov.id)}"
+                                              value="${escapeHtml(String(Math.round(ov.x)))}" class="accent-violet-400" />
+                                     </label>
+                                     <label class="text-[11px] text-slate-300 flex flex-col gap-1">
+                                       <span>Vertical (Y): ${Math.round(ov.y)}%</span>
+                                       <input type="range" min="0" max="100" step="1" data-ov-field="y" data-overlay-id="${escapeHtml(ov.id)}"
+                                              value="${escapeHtml(String(Math.round(ov.y)))}" class="accent-violet-400" />
+                                     </label>
+                                     <label class="text-[11px] text-slate-300 flex flex-col gap-1">
+                                       <span>Tamaño: ${Math.round(ov.size)}px</span>
+                                       <input type="range" min="28" max="260" step="2" data-ov-field="size" data-overlay-id="${escapeHtml(ov.id)}"
+                                              value="${escapeHtml(String(Math.round(ov.size)))}" class="accent-violet-400" />
+                                     </label>
+                                   </div>
+                                 </div>
+                               `;
+                             })
+                             .join("")}
+                         </div>`
+                      : ""
+                  }
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400">Descripción</label>
+                <textarea rows="3" data-field="description"
+                          placeholder="Describe la personalidad, dinámica o historia del personaje..."
+                          class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-sm text-white focus:outline-none focus:border-violet-400">${escapeHtml(char.description)}</textarea>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-slate-900/75 border border-white/10 space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Música de Spotify</span>
+                  <span class="text-[11px] text-slate-400">Autocompleta título, artista y portada</span>
+                </div>
+                <div>
+                  <label class="block text-xs font-bold text-slate-300 mb-1">Enlace de canción en Spotify</label>
+                  <input type="text" data-field="spotifyUrl" value="${escapeHtml(char.spotifyUrl)}"
+                         placeholder="https://open.spotify.com/track/..."
+                         class="w-full px-3.5 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-violet-400" />
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Título de la canción</label>
+                    <input type="text" data-field="spotifyTitle" value="${escapeHtml(char.spotifyTitle)}"
+                           placeholder="Ej. A New Kind Of Love"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-violet-400" />
+                  </div>
+                  <div>
+                    <label class="block text-xs font-bold text-slate-300 mb-1">Artista / Detalle</label>
+                    <input type="text" data-field="spotifyArtist" value="${escapeHtml(char.spotifyArtist)}"
+                           placeholder="Ej. Frou Frou • Spotify"
+                           class="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs sm:text-sm text-white focus:outline-none focus:border-violet-400" />
+                  </div>
+                </div>
+                <div class="flex items-center gap-3">
+                  <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-800 shrink-0 border border-white/10">
+                    ${renderMediaThumb(char.spotifyCover, "center", "♪", false)}
+                  </div>
+                  <div class="flex-1 space-y-1.5 min-w-0">
+                    <input type="text" data-field="spotifyCover" value="${escapeHtml(char.spotifyCover)}"
+                           placeholder="URL opcional de portada del álbum..."
+                           class="w-full px-3 py-1.5 rounded-xl bg-slate-950/80 border border-white/10 text-xs text-white focus:outline-none focus:border-violet-400" />
+                    <label class="inline-block px-2.5 py-1 rounded-lg bg-white/10 hover:bg-white/15 text-[11px] font-semibold text-slate-200 cursor-pointer">
+                      Subir portada de canción
+                      <input type="file" accept="image/*" data-upload="spotifyCover" class="hidden" />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              <div class="space-y-3">
+                <div class="flex items-center justify-between gap-2">
+                  <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Estadísticas y Emociones</span>
+                  <button type="button" data-action="add-emotion"
+                          class="px-3 py-1.5 rounded-xl text-xs font-bold bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-200 border border-emerald-400/30 transition cursor-pointer">
+                    + Añadir emoción
+                  </button>
+                </div>
+
+                <div class="space-y-3">
+                  ${char.emotions
+                    .map((emo) => {
+                      const pct = Math.max(0, Math.min(100, Number(emo.value) || 0));
+                      return `
+                        <div class="p-4 rounded-2xl bg-slate-900/80 border border-white/10 space-y-3" data-emo-id="${emo.id}">
+                          <div class="flex flex-wrap items-center gap-2.5">
+                            <input type="text" data-emo-field="label" data-emo-id="${emo.id}" value="${escapeHtml(emo.label)}"
+                                   placeholder="Nombre de la emoción"
+                                   class="flex-1 min-w-[140px] px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs sm:text-sm font-semibold text-white" />
+                            <div class="flex items-center gap-2">
+                              <input type="range" min="0" max="100" data-emo-field="value" data-emo-id="${emo.id}" value="${pct}"
+                                     class="w-24 sm:w-28 accent-violet-400" />
+                              <span class="text-xs font-extrabold w-10 text-right" style="color:${escapeHtml(emo.color)}">${pct}%</span>
+                            </div>
+                            ${
+                              char.emotions.length > 1
+                                ? `<button type="button" data-action="remove-emotion" data-emo-id="${emo.id}"
+                                           class="px-2.5 py-1.5 rounded-lg text-xs font-bold bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 cursor-pointer">
+                                     Quitar
+                                   </button>`
+                                : ""
+                            }
+                          </div>
+
+                          <div class="flex flex-wrap items-center gap-1.5">
+                            ${EMOTION_COLORS.map((col) => {
+                              const selected = (emo.color || "").toLowerCase() === col.toLowerCase();
+                              return `
+                                <button type="button" data-action="select-emo-color" data-emo-id="${emo.id}" data-color="${col}"
+                                        class="w-5 h-5 rounded-full transition cursor-pointer ${
+                                          selected ? "ring-2 ring-white scale-110" : "opacity-85 hover:opacity-100"
+                                        }"
+                                        style="background:${col}" title="${col}"></button>
+                              `;
+                            }).join("")}
+                            <label class="ml-1 flex items-center gap-1 text-[11px] font-semibold text-slate-300 bg-slate-950/80 px-2 py-1 rounded-lg border border-white/10 cursor-pointer">
+                              <span>Libre</span>
+                              <input type="color" data-emo-field="color" data-emo-id="${emo.id}" value="${escapeHtml(emo.color || "#8b5cf6")}"
+                                     class="w-5 h-5 bg-transparent border-0 cursor-pointer" />
+                            </label>
+                          </div>
+
+                          <div>
+                            <label class="block text-[11px] font-semibold text-slate-400 mb-1">Breve explicación de esta emoción</label>
+                            <input type="text" data-emo-field="note" data-emo-id="${emo.id}" value="${escapeHtml(emo.note || "")}"
+                                   placeholder="Explica cómo o cuándo se manifiesta esta emoción..."
+                                   class="w-full px-3 py-2 rounded-xl bg-slate-950/80 border border-white/10 text-xs text-slate-200" />
+                          </div>
+                        </div>
+                      `;
+                    })
+                    .join("")}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-400">Advertencias y Consejos</label>
+                <textarea rows="2" data-field="tipsWarnings"
+                          placeholder="Consejos de interacción o advertencias importantes..."
+                          class="w-full px-3.5 py-2.5 rounded-xl bg-slate-900/90 border border-white/10 text-sm text-white focus:outline-none focus:border-violet-400">${escapeHtml(char.tipsWarnings)}</textarea>
+              </div>
+            </section>
+
+            <section class="xl:col-span-5 space-y-3 xl:sticky xl:top-20">
+              <div class="flex items-center justify-between px-1">
+                <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Vista Previa en Vivo</span>
+                <span class="text-[11px] text-slate-400">
+                  ${hasAnyGif(char) ? "Contiene GIF animado (exporta como .GIF)" : "Estática (exporta como .PNG)"}
+                </span>
+              </div>
+              ${renderCharacterCardDisplay(char, { showActions: true, onEditLabel: "Pantalla Final", interactiveOverlays: true })}
+            </section>
+          </div>
+        `;
+      }
+
+      function renderShareModal(char) {
+        if (!uiState.shareModalOpen) return "";
+        const shareUrl = encodeSharePayload(char);
+        const animated = hasAnyGif(char);
+
+        return `
+          <div class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" data-modal-backdrop="share">
+            <div class="glass-panel w-full max-w-2xl rounded-3xl p-5 sm:p-6 space-y-5 border border-white/15 max-h-[90vh] overflow-y-auto custom-scroll">
+              <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div>
+                  <h3 class="text-lg font-extrabold text-white">Compartir y Exportar Tarjeta</h3>
+                  <p class="text-xs text-slate-400">El enlace #share= incluye paleta, tipografía, música, GIFs y notas.</p>
+                </div>
+                <button type="button" data-action="close-share-modal"
+                        class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer">
+                  ✕
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-300">Enlace compartible (#share=)</label>
+                <div class="flex flex-col sm:flex-row gap-2">
+                  <input type="text" readonly value="${escapeHtml(shareUrl)}"
+                         class="flex-1 px-3 py-2.5 rounded-xl bg-slate-950/90 border border-white/10 text-xs text-slate-200 select-all" />
+                  <button type="button" data-action="copy-share-link"
+                          class="px-4 py-2.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white shrink-0 cursor-pointer">
+                    Copiar Enlace
+                  </button>
+                </div>
+              </div>
+
+              <div class="p-4 rounded-2xl bg-slate-900/75 border border-white/10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                <div class="space-y-1">
+                  <div class="text-sm font-bold text-white">
+                    Formato de descarga: ${animated ? "GIF Animado (.gif)" : "Imagen Estática (.png)"}
+                  </div>
+                  <p class="text-xs text-slate-400">
+                    ${
+                      animated
+                        ? "Se detectó movimiento GIF en el personaje: se exportará como .GIF animando sus cuadros con altura uniforme."
+                        : "Sin GIFs activos: se exportará como .PNG nítido con altura adaptable al contenido."
+                    }
+                  </p>
+                  ${
+                    uiState.isExporting
+                      ? `<div class="text-xs font-bold text-amber-300">${escapeHtml(uiState.exportProgressText || "Exportando...")}</div>`
+                      : ""
+                  }
+                </div>
+                <button type="button" data-action="export-card" ${uiState.isExporting ? "disabled" : ""}
+                        class="px-4 py-2.5 rounded-xl text-xs font-extrabold bg-emerald-500 hover:bg-emerald-400 disabled:opacity-50 text-slate-950 shrink-0 cursor-pointer">
+                  ${uiState.isExporting ? "Exportando..." : animated ? "Descargar GIF" : "Descargar PNG"}
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderAccountModal() {
+        if (!uiState.accountModalOpen) return "";
+        return `
+          <div class="fixed inset-0 z-50 bg-black/75 backdrop-blur-sm flex items-center justify-center p-4" data-modal-backdrop="account">
+            <div class="glass-panel w-full max-w-lg rounded-3xl p-5 sm:p-6 space-y-5 border border-white/15 max-h-[90vh] overflow-y-auto custom-scroll">
+              <div class="flex items-center justify-between gap-3 border-b border-white/10 pb-3">
+                <div>
+                  <h3 class="text-lg font-extrabold text-white">Cuentas Locales y Respaldo JSON</h3>
+                  <p class="text-xs text-slate-400">Funciona con respaldo seguro en memoria en incógnito o GitHub Pages.</p>
+                </div>
+                <button type="button" data-action="close-account-modal"
+                        class="w-8 h-8 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold cursor-pointer">
+                  ✕
+                </button>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-300">Cambiar de cuenta</label>
+                <div class="flex flex-wrap gap-2">
+                  ${globalMeta.accounts
+                    .map((acc) => {
+                      const active = acc === appState.accountName;
+                      return `
+                        <button type="button" data-action="switch-account" data-account="${escapeHtml(acc)}"
+                                class="px-3 py-1.5 rounded-xl text-xs font-bold border transition cursor-pointer ${
+                                  active
+                                    ? "bg-violet-600 text-white border-violet-400"
+                                    : "bg-slate-900/80 text-slate-300 border-white/10 hover:bg-slate-800"
+                                }">
+                          ${escapeHtml(acc)}
+                        </button>
+                      `;
+                    })
+                    .join("")}
+                </div>
+              </div>
+
+              <div class="space-y-2">
+                <label class="block text-xs font-bold text-slate-300">Crear nueva cuenta</label>
+                <div class="flex gap-2">
+                  <input type="text" id="new-account-input" placeholder="Nombre de cuenta..."
+                         class="flex-1 px-3.5 py-2 rounded-xl bg-slate-950/90 border border-white/10 text-xs text-white" />
+                  <button type="button" data-action="create-account"
+                          class="px-4 py-2 rounded-xl text-xs font-bold bg-indigo-600 hover:bg-indigo-500 text-white cursor-pointer">
+                    Crear
+                  </button>
+                </div>
+              </div>
+
+              <div class="flex items-center justify-between p-3.5 rounded-2xl bg-slate-900/75 border border-white/10">
+                <div>
+                  <div class="text-xs font-bold text-white">Autoguardado</div>
+                  <div class="text-[11px] text-slate-400">Guarda cambios automáticamente en esta cuenta</div>
+                </div>
+                <input type="checkbox" data-action="toggle-autosave" ${appState.autoSave ? "checked" : ""}
+                       class="w-4 h-4 accent-violet-500 cursor-pointer" />
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                <button type="button" data-action="export-json"
+                        class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white cursor-pointer">
+                  Exportar JSON
+                </button>
+                <label class="px-3.5 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/20 text-white cursor-pointer">
+                  Importar JSON
+                  <input type="file" accept=".json,application/json" data-action="import-json-file" class="hidden" />
+                </label>
+                <button type="button" data-action="restore-defaults"
+                        class="ml-auto px-3.5 py-2 rounded-xl text-xs font-bold bg-amber-500/20 hover:bg-amber-500/30 text-amber-200 border border-amber-400/30 cursor-pointer">
+                  Restaurar ejemplos
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }
+
+      function renderApp() {
+        applyPageTheme(appState.pageThemeId);
+        const activeChar = getActiveCharacter();
+        const root = document.getElementById("app");
+        if (!root) return;
+
+        root.innerHTML = `
+          <header class="sticky top-0 z-30 glass-panel border-b border-white/10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+              <div class="flex items-center gap-3 min-w-0">
+                <div class="w-9 h-9 rounded-xl bg-violet-600/30 border border-violet-400/40 flex items-center justify-center text-violet-200 font-extrabold shrink-0">
+                  ✦
+                </div>
+                <div class="min-w-0">
+                  <div class="font-extrabold text-sm sm:text-base text-white truncate">Estudio de Personajes y Emociones</div>
+                  <div class="text-[11px] text-slate-400 truncate">Página creada por Sirius para Nefer</div>
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <select data-action="change-page-theme" title="Tema de fondo de la página"
+                        class="px-2.5 py-2 rounded-xl bg-slate-900/90 border border-white/10 text-xs font-semibold text-slate-200 focus:outline-none">
+                  ${CARD_THEMES.map(
+                    (t) => `<option value="${t.id}" ${appState.pageThemeId === t.id ? "selected" : ""}>Fondo: ${escapeHtml(t.name)}</option>`
+                  ).join("")}
+                </select>
+
+                <button type="button" data-action="open-account-modal"
+                        class="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-slate-100 border border-white/10 cursor-pointer">
+                  ${escapeHtml(appState.accountName)}
+                </button>
+
+                <button type="button" data-action="open-share-modal"
+                        class="px-3 py-2 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white border border-white/15 cursor-pointer">
+                  Compartir Tarjeta
+                </button>
+
+                ${
+                  uiState.viewMode !== "shared"
+                    ? `<button type="button" data-action="create-character"
+                               class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-violet-600 hover:bg-violet-500 text-white cursor-pointer">
+                         + Nuevo Personaje
+                       </button>`
+                    : `<button type="button" data-action="exit-shared-view"
+                               class="px-3.5 py-2 rounded-xl text-xs font-extrabold bg-violet-600 hover:bg-violet-500 text-white cursor-pointer">
+                         Abrir en mi Estudio
+                       </button>`
+                }
+              </div>
+            </div>
+
+            ${
+              uiState.statusMessage
+                ? `<div class="bg-violet-600/25 border-t border-violet-400/30 px-4 py-2 text-center text-xs font-bold text-violet-100">
+                     ${escapeHtml(uiState.statusMessage)}
+                   </div>`
+                : ""
+            }
+          </header>
+
+          <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6">
+            ${
+              uiState.viewMode === "shared"
+                ? `<div class="space-y-4">
+                     <div class="glass-panel rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                       <div class="text-xs sm:text-sm text-slate-200">
+                         <span class="font-bold text-violet-300">Tarjeta compartida</span> — Visualizando con el tema de color y medios incluidos en el enlace.
+                       </div>
+                       <button type="button" data-action="exit-shared-view"
+                               class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white cursor-pointer">
+                         Ir a mi Estudio
+                       </button>
+                     </div>
+                     <div class="max-w-3xl mx-auto">
+                       ${renderCharacterCardDisplay(activeChar, { showActions: true, onEditLabel: null, interactiveOverlays: false })}
+                     </div>
+                   </div>`
+                : `<section class="glass-panel rounded-2xl p-3.5 sm:p-4 space-y-3">
+                     <div class="flex flex-wrap items-center justify-between gap-2">
+                       <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">
+                         Elenco de Personajes (${appState.characters.length})
+                       </span>
+                       <div class="flex items-center gap-3">
+                         ${
+                           appState.characters.length > 1
+                             ? `<button type="button" data-action="delete-character"
+                                        class="text-xs font-bold text-rose-300 hover:text-rose-200 cursor-pointer">
+                                  Eliminar actual
+                                </button>`
+                             : ""
+                         }
+                         <button type="button" data-action="restore-defaults"
+                                 class="text-xs font-semibold text-slate-300 hover:text-white cursor-pointer">
+                           Restaurar ejemplos
+                         </button>
+                       </div>
+                     </div>
+
+                     <div class="flex items-center gap-2.5 overflow-x-auto pb-1 custom-scroll">
+                       ${appState.characters
+                         .map((c) => {
+                           const isSelected = c.id === activeChar.id;
+                           const cTheme = getThemeById(c.themeId);
+                           const cClip = getAvatarClipPathCss(c.avatarShape || "rounded-square");
+                           return `
+                             <button type="button" data-action="select-character" data-char-id="${c.id}"
+                                     class="flex items-center gap-2.5 px-3.5 py-2 rounded-2xl border shrink-0 transition cursor-pointer ${
+                                       isSelected
+                                         ? "bg-white/15 border-white/40 shadow"
+                                         : "bg-slate-900/65 border-white/10 hover:bg-slate-800/80"
+                                     }">
+                               <div style="clip-path:${cClip}; -webkit-clip-path:${cClip}; background:${cTheme.badgeBg}; color:${cTheme.badgeText};"
+                                    class="w-9 h-9 overflow-hidden flex items-center justify-center text-xs font-extrabold shrink-0">
+                                 ${
+                                   c.avatarUrl
+                                     ? `<img src="${escapeHtml(c.avatarUrl)}" alt="${escapeHtml(c.name)}"
+                                             style="object-position:${getObjectPositionCss(c.avatarPosition)}"
+                                             class="w-full h-full object-cover" />`
+                                     : escapeHtml(getInitials(c.name))
+                                 }
+                               </div>
+                               <div class="text-left">
+                                 <div class="text-xs sm:text-sm font-bold text-white leading-tight">${escapeHtml(c.name)}</div>
+                                 <div class="text-[11px] text-slate-400 leading-tight">${escapeHtml(c.title || "Personaje")}</div>
+                               </div>
+                             </button>
+                           `;
+                         })
+                         .join("")}
+                     </div>
+                   </section>
+
+                   ${
+                     uiState.viewMode === "final"
+                       ? `<div class="space-y-4">
+                            <div class="glass-panel rounded-2xl px-4 py-3 flex flex-wrap items-center justify-between gap-3">
+                              <div class="text-xs sm:text-sm font-bold text-slate-200">Pantalla Final — ${escapeHtml(activeChar.name)}</div>
+                              <div class="flex items-center gap-2">
+                                <button type="button" data-action="switch-to-editor"
+                                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-white/10 hover:bg-white/15 text-white cursor-pointer">
+                                  Volver a Editar
+                                </button>
+                                <button type="button" data-action="open-share-modal"
+                                        class="px-3.5 py-1.5 rounded-xl text-xs font-bold bg-violet-600 hover:bg-violet-500 text-white cursor-pointer">
+                                  Compartir Tarjeta
+                                </button>
+                              </div>
+                            </div>
+                            <div class="max-w-3xl mx-auto">
+                              ${renderCharacterCardDisplay(activeChar, { showActions: true, onEditLabel: "Volver a Editar", interactiveOverlays: false })}
+                            </div>
+                          </div>`
+                       : renderEditorView(activeChar)
+                   }`
+            }
+          </main>
+
+          ${renderShareModal(activeChar)}
+          ${renderAccountModal()}
+        `;
+      }
+
+      /* =====================================================================
+         9. DELEGACIÓN DE EVENTOS Y ARRASTRE DE ELEMENTOS SOBRE LA TARJETA
+         ===================================================================== */
+      function refreshLivePreviewColumn() {
+        const activeChar = getActiveCharacter();
+        const previewCol = document.querySelector("section.xl\\:col-span-5");
+        if (previewCol && uiState.viewMode === "editor") {
+          previewCol.innerHTML = `
+            <div class="flex items-center justify-between px-1">
+              <span class="text-xs font-extrabold uppercase tracking-wider text-slate-400">Vista Previa en Vivo</span>
+              <span class="text-[11px] text-slate-400">
+                ${hasAnyGif(activeChar) ? "Contiene GIF animado (exporta como .GIF)" : "Estática (exporta como .PNG)"}
+              </span>
+            </div>
+            ${renderCharacterCardDisplay(activeChar, { showActions: true, onEditLabel: "Pantalla Final", interactiveOverlays: true })}
+          `;
+        }
+      }
+
+      let dragState = null;
+
+      document.addEventListener("pointerdown", (event) => {
+        if (uiState.viewMode !== "editor") return;
+        const ovEl = event.target.closest("[data-overlay-id]");
+        if (!ovEl) return;
+        const canvasEl = ovEl.closest("[data-overlay-canvas]");
+        if (!canvasEl) return;
+        const overlayId = ovEl.getAttribute("data-overlay-id");
+        if (!overlayId) return;
+
+        event.preventDefault();
+        const rect = canvasEl.getBoundingClientRect();
+        dragState = {
+          overlayId,
+          left: rect.left,
+          top: rect.top,
+          width: Math.max(1, rect.width),
+          height: Math.max(1, rect.height),
+          el: ovEl
+        };
+        if (typeof ovEl.setPointerCapture === "function") {
+          try {
+            ovEl.setPointerCapture(event.pointerId);
+          } catch (_e) {
+            // Ignorar si el evento sintético no admite captura
+          }
+        }
+      });
+
+      document.addEventListener("pointermove", (event) => {
+        if (!dragState) return;
+        const px = Math.max(0, Math.min(100, ((event.clientX - dragState.left) / dragState.width) * 100));
+        const py = Math.max(0, Math.min(100, ((event.clientY - dragState.top) / dragState.height) * 100));
+        if (dragState.el) {
+          dragState.el.style.left = `${px}%`;
+          dragState.el.style.top = `${py}%`;
+        }
+        updateActiveCharacter((c) => {
+          c.overlays = (c.overlays || []).map((o) =>
+            o.id === dragState.overlayId ? { ...o, x: Math.round(px), y: Math.round(py) } : o
+          );
+        }, false);
+      });
+
+      function finishOverlayDrag() {
+        if (!dragState) return;
+        dragState = null;
+        renderApp();
+      }
+
+      document.addEventListener("pointerup", finishOverlayDrag);
+      document.addEventListener("pointercancel", finishOverlayDrag);
+
+      document.addEventListener("click", async (event) => {
+        const backdrop = event.target.closest("[data-modal-backdrop]");
+        if (backdrop && event.target === backdrop) {
+          uiState.shareModalOpen = false;
+          uiState.accountModalOpen = false;
+          renderApp();
+          return;
+        }
+
+        const actionEl = event.target.closest("[data-action]");
+        if (!actionEl) return;
+        const action = actionEl.getAttribute("data-action");
+        const activeChar = getActiveCharacter();
+
+        if (action === "open-share-modal") {
+          uiState.shareModalOpen = true;
+          renderApp();
+        } else if (action === "close-share-modal") {
+          uiState.shareModalOpen = false;
+          renderApp();
+        } else if (action === "open-account-modal") {
+          uiState.accountModalOpen = true;
+          renderApp();
+        } else if (action === "close-account-modal") {
+          uiState.accountModalOpen = false;
+          renderApp();
+        } else if (action === "switch-to-final") {
+          uiState.viewMode = "final";
+          renderApp();
+        } else if (action === "switch-to-editor") {
+          uiState.viewMode = "editor";
+          renderApp();
+        } else if (action === "exit-shared-view") {
+          try {
+            window.history.replaceState(null, "", window.location.pathname + window.location.search);
+          } catch (_e) {
+            window.location.hash = "";
+          }
+          uiState.sharedCharacter = null;
+          uiState.viewMode = "editor";
+          renderApp();
+        } else if (action === "select-character") {
+          const charId = actionEl.getAttribute("data-char-id");
+          if (charId && appState.characters.some((c) => c.id === charId)) {
+            appState.selectedId = charId;
+            persistAccountData(appState, false);
+            renderApp();
+          }
+        } else if (action === "create-character") {
+          const num = appState.characters.length + 1;
+          const newChar = normalizeCharacter(
+            {
+              id: `char-${Date.now()}`,
+              name: `Nuevo Personaje ${num}`,
+              title: "Arquetipo Personalizado",
+              position: "Compañero de Trama",
+              description: "Escribe aquí la historia, motivación o rasgos principales del personaje.",
+              themeId: CARD_THEMES[num % CARD_THEMES.length].id,
+              nameFontId: NAME_FONTS[num % NAME_FONTS.length].id,
+              avatarShape: "rounded-square",
+              avatarScale: 100,
+              overlays: [],
+              emotions: [
+                { id: `e-${Date.now()}-1`, label: "Confianza", value: 70, color: "#34d399", note: "" },
+                { id: `e-${Date.now()}-2`, label: "Intrigas", value: 55, color: "#a78bfa", note: "" }
+              ]
+            },
+            num
+          );
+          appState.characters.push(newChar);
+          appState.selectedId = newChar.id;
+          persistAccountData(appState, false);
+          uiState.viewMode = "editor";
+          renderApp();
+          setNotice(`Se creó ${newChar.name}.`);
+        } else if (action === "delete-character") {
+          if (appState.characters.length <= 1) return;
+          appState.characters = appState.characters.filter((c) => c.id !== activeChar.id);
+          appState.selectedId = appState.characters[0].id;
+          persistAccountData(appState, false);
+          renderApp();
+          setNotice("Personaje eliminado.");
+        } else if (action === "restore-defaults") {
+          const seeded = createDefaultCharacters();
+          appState.characters = seeded;
+          appState.selectedId = seeded[0].id;
+          persistAccountData(appState, true);
+          renderApp();
+          setNotice("Personajes de ejemplo restaurados.");
+        } else if (action === "select-card-theme") {
+          const themeId = actionEl.getAttribute("data-theme-id");
+          if (themeId) {
+            updateActiveCharacter((c) => {
+              c.themeId = themeId;
+            });
+          }
+        } else if (action === "select-avatar-shape") {
+          const shape = actionEl.getAttribute("data-shape");
+          if (shape && AVATAR_SHAPES.includes(shape)) {
+            updateActiveCharacter((c) => {
+              c.avatarShape = shape;
+            });
+          }
+        } else if (action === "add-overlay-url") {
+          const input = document.getElementById("new-overlay-url-input");
+          const rawUrl = (input ? input.value : uiState.newOverlayUrl || "").trim();
+          if (!rawUrl) {
+            setNotice("Pega primero un enlace de imagen o GIF para colocar sobre la tarjeta.");
+            return;
+          }
+          const count = (activeChar.overlays || []).length;
+          const offsetX = Math.min(82, 22 + ((count * 17) % 60));
+          const offsetY = Math.min(82, 24 + ((count * 19) % 58));
+          updateActiveCharacter((c) => {
+            c.overlays = [
+              ...(c.overlays || []),
+              {
+                id: `ovl-${Date.now()}-${count}`,
+                url: rawUrl,
+                x: offsetX,
+                y: offsetY,
+                size: uiState.newOverlaySize || 88
+              }
+            ];
+          }, false);
+          uiState.newOverlayUrl = "";
+          renderApp();
+          setNotice("Elemento añadido sobre la tarjeta.");
+        } else if (action === "remove-overlay") {
+          const ovId = actionEl.getAttribute("data-overlay-id");
+          updateActiveCharacter((c) => {
+            c.overlays = (c.overlays || []).filter((o) => o.id !== ovId);
+          });
+        } else if (action === "clear-media") {
+          const target = actionEl.getAttribute("data-target");
+          if (target) {
+            updateActiveCharacter((c) => {
+              c[target] = "";
+            });
+          }
+        } else if (action === "add-emotion") {
+          updateActiveCharacter((c) => {
+            const idx = c.emotions.length;
+            c.emotions.push({
+              id: `emo-${Date.now()}-${idx}`,
+              label: `Emoción ${idx + 1}`,
+              value: 50,
+              color: EMOTION_COLORS[idx % EMOTION_COLORS.length],
+              note: ""
+            });
+          });
+        } else if (action === "remove-emotion") {
+          const emoId = actionEl.getAttribute("data-emo-id");
+          updateActiveCharacter((c) => {
+            if (c.emotions.length > 1) {
+              c.emotions = c.emotions.filter((e) => e.id !== emoId);
+            }
+          });
+        } else if (action === "select-emo-color") {
+          const emoId = actionEl.getAttribute("data-emo-id");
+          const color = actionEl.getAttribute("data-color");
+          updateActiveCharacter((c) => {
+            c.emotions = c.emotions.map((e) => (e.id === emoId ? { ...e, color } : e));
+          });
+        } else if (action === "copy-share-link") {
+          await copyShareLink(activeChar);
+        } else if (action === "export-card") {
+          await handleExportCard(activeChar);
+        } else if (action === "switch-account") {
+          const acc = actionEl.getAttribute("data-account");
+          if (acc) {
+            persistAccountData(appState, false);
+            globalMeta.currentAccount = acc;
+            saveGlobalMeta(globalMeta);
+            appState = loadAccountData(acc);
+            renderApp();
+            setNotice(`Cuenta activa: ${acc}`);
+          }
+        } else if (action === "create-account") {
+          const input = document.getElementById("new-account-input");
+          const name = input ? input.value.trim() : "";
+          if (!name) return;
+          if (!globalMeta.accounts.includes(name)) {
+            globalMeta.accounts.push(name);
+          }
+          globalMeta.currentAccount = name;
+          saveGlobalMeta(globalMeta);
+          appState = createDefaultAccountState(name);
+          persistAccountData(appState, true);
+          renderApp();
+          setNotice(`Cuenta "${name}" creada.`);
+        } else if (action === "export-json") {
+          const dump = JSON.stringify({
+            exportedAt: new Date().toISOString(),
+            account: appState
+          }, null, 2);
+          const blob = new Blob([dump], { type: "application/json" });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement("a");
+          a.href = url;
+          a.download = `respaldo-${(appState.accountName || "cuenta").toLowerCase().replace(/[^a-z0-9]+/g, "-")}.json`;
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+          window.setTimeout(() => URL.revokeObjectURL(url), 4000);
+          setNotice("Respaldo JSON exportado.");
+        }
+      });
+
+      document.addEventListener("input", async (event) => {
+        const el = event.target;
+        if (el.id === "new-overlay-url-input") {
+          uiState.newOverlayUrl = el.value;
+          return;
+        }
+
+        const ovField = el.getAttribute("data-ov-field");
+        const ovId = el.getAttribute("data-overlay-id");
+        if (ovField && ovId) {
+          const numVal = Number(el.value);
+          updateActiveCharacter((c) => {
+            c.overlays = (c.overlays || []).map((o) => {
+              if (o.id !== ovId) return o;
+              if (ovField === "x") return { ...o, x: Math.max(0, Math.min(100, isNaN(numVal) ? 50 : numVal)) };
+              if (ovField === "y") return { ...o, y: Math.max(0, Math.min(100, isNaN(numVal) ? 50 : numVal)) };
+              if (ovField === "size") return { ...o, size: Math.max(24, Math.min(280, isNaN(numVal) ? 88 : numVal)) };
+              return o;
+            });
+          }, false);
+          const rowEl = el.closest("[data-ov-row]");
+          const labelSpan = rowEl && rowEl.querySelector("label span");
+          if (labelSpan) {
+            if (ovField === "x") labelSpan.textContent = `Horizontal (X): ${Math.round(numVal)}%`;
+            if (ovField === "y") labelSpan.textContent = `Vertical (Y): ${Math.round(numVal)}%`;
+            if (ovField === "size") labelSpan.textContent = `Tamaño: ${Math.round(numVal)}px`;
+          }
+          refreshLivePreviewColumn();
+          return;
+        }
+
+        const field = el.getAttribute("data-field");
+        if (field) {
+          updateActiveCharacter((c) => {
+            if (field === "bodyBgOverlay") {
+              c.bodyBgOverlay = Number(el.value) || 0.68;
+            } else if (field === "avatarScale") {
+              c.avatarScale = Math.max(70, Math.min(145, Math.round(Number(el.value) || 100)));
+            } else {
+              c[field] = el.value;
+            }
+          }, false);
+
+          if (field === "avatarScale") {
+            const scaleLabel = document.querySelector("[data-avatar-scale-label]");
+            if (scaleLabel) {
+              scaleLabel.textContent = `${Math.max(70, Math.min(145, Math.round(Number(el.value) || 100)))}%`;
+            }
+          }
+
+          const activeChar = getActiveCharacter();
+          refreshLivePreviewColumn();
+
+          const theme = getThemeById(activeChar.themeId);
+          const font = getFontById(activeChar.nameFontId);
+          const namePreviewSpan = document.querySelector(".p-3.rounded-2xl.bg-slate-900\\/70 span.truncate");
+          if (namePreviewSpan) {
+            namePreviewSpan.style.fontFamily = font.css;
+            namePreviewSpan.style.fontStyle = font.italic ? "italic" : "normal";
+            namePreviewSpan.style.color = theme.text;
+            namePreviewSpan.textContent = activeChar.name || "Personaje";
+          }
+
+          if (field === "spotifyUrl") {
+            const meta = await lookupSpotifyMetadata(el.value, false);
+            if (meta && (meta.title || meta.artist || meta.cover)) {
+              const targetCharId = activeChar.id;
+              const charIdx = appState.characters.findIndex((item) => item.id === targetCharId);
+              if (charIdx !== -1) {
+                const cur = appState.characters[charIdx];
+                appState.characters[charIdx] = normalizeCharacter(
+                  {
+                    ...cur,
+                    spotifyTitle: meta.title || cur.spotifyTitle,
+                    spotifyArtist: meta.artist || cur.spotifyArtist,
+                    spotifyCover: meta.cover || cur.spotifyCover
+                  },
+                  charIdx
+                );
+                persistAccountData(appState, false);
+                const titleInput = document.querySelector('input[data-field="spotifyTitle"]');
+                const artistInput = document.querySelector('input[data-field="spotifyArtist"]');
+                const coverInput = document.querySelector('input[data-field="spotifyCover"]');
+                if (titleInput && meta.title) titleInput.value = meta.title;
+                if (artistInput && meta.artist) artistInput.value = meta.artist;
+                if (coverInput && meta.cover) coverInput.value = meta.cover;
+                refreshLivePreviewColumn();
+              }
+            }
+          }
+          return;
+        }
+
+        const emoField = el.getAttribute("data-emo-field");
+        const emoId = el.getAttribute("data-emo-id");
+        if (emoField && emoId) {
+          updateActiveCharacter((c) => {
+            c.emotions = c.emotions.map((e) => {
+              if (e.id !== emoId) return e;
+              if (emoField === "value") {
+                return { ...e, value: Math.max(0, Math.min(100, Number(el.value) || 0)) };
+              }
+              return { ...e, [emoField]: el.value };
+            });
+          }, false);
+
+          if (emoField === "value") {
+            const pctSpan = el.parentElement && el.parentElement.querySelector("span");
+            if (pctSpan) pctSpan.textContent = `${Math.max(0, Math.min(100, Number(el.value) || 0))}%`;
+          }
+
+          refreshLivePreviewColumn();
+        }
+      });
+
+      document.addEventListener("change", async (event) => {
+        const el = event.target;
+        const action = el.getAttribute("data-action");
+
+        if (action === "change-page-theme") {
+          appState.pageThemeId = el.value;
+          persistAccountData(appState, false);
+          renderApp();
+          return;
+        }
+
+        if (action === "toggle-autosave") {
+          appState.autoSave = Boolean(el.checked);
+          persistAccountData(appState, true);
+          renderApp();
+          return;
+        }
+
+        if (action === "import-json-file" && el.files && el.files[0]) {
+          try {
+            const text = await readFileAsDataUrl(el.files[0]);
+            const base64Part = text.split(",")[1] || "";
+            const decoded = new TextDecoder().decode(Uint8Array.from(atob(base64Part), (ch) => ch.charCodeAt(0)));
+            const parsed = JSON.parse(decoded);
+            const accSource = parsed && parsed.account ? parsed.account : parsed;
+            if (accSource && Array.isArray(accSource.characters) && accSource.characters.length > 0) {
+              const chars = accSource.characters.map((c, i) => normalizeCharacter(c, i));
+              appState.characters = chars;
+              appState.selectedId = chars[0].id;
+              if (CARD_THEMES.some((t) => t.id === accSource.pageThemeId)) {
+                appState.pageThemeId = accSource.pageThemeId;
+              }
+              persistAccountData(appState, true);
+              renderApp();
+              setNotice("Respaldo JSON importado correctamente.");
+            } else {
+              setNotice("El archivo JSON no contiene personajes válidos.");
+            }
+          } catch (_err) {
+            setNotice("No se pudo leer el archivo JSON.");
+          }
+          return;
+        }
+
+        const uploadTarget = el.getAttribute("data-upload");
+        if (uploadTarget && el.files && el.files[0]) {
+          const file = el.files[0];
+          try {
+            const dataUrl = await readFileAsDataUrl(file);
+            if (uploadTarget === "overlay") {
+              const currentChar = getActiveCharacter();
+              const count = (currentChar.overlays || []).length;
+              const offsetX = Math.min(82, 22 + ((count * 17) % 60));
+              const offsetY = Math.min(82, 24 + ((count * 19) % 58));
+              updateActiveCharacter((c) => {
+                c.overlays = [
+                  ...(c.overlays || []),
+                  {
+                    id: `ovl-${Date.now()}-${count}`,
+                    url: dataUrl,
+                    x: offsetX,
+                    y: offsetY,
+                    size: uiState.newOverlaySize || 88
+                  }
+                ];
+              });
+              setNotice(file.type === "image/gif" ? "GIF añadido sobre la tarjeta." : "Imagen añadida sobre la tarjeta.");
+            } else {
+              updateActiveCharacter((c) => {
+                c[uploadTarget] = dataUrl;
+              });
+              setNotice(file.type === "image/gif" ? "GIF cargado correctamente." : "Imagen cargada correctamente.");
+            }
+          } catch (_err) {
+            setNotice("No se pudo cargar el archivo seleccionado.");
+          }
+        }
+      });
+
+      window.addEventListener("hashchange", () => {
+        const shared = decodeShareFromHash();
+        if (shared) {
+          uiState.sharedCharacter = shared;
+          uiState.viewMode = "shared";
+        } else if (uiState.viewMode === "shared") {
+          uiState.sharedCharacter = null;
+          uiState.viewMode = "editor";
+        }
+        renderApp();
+      });
+
+      renderApp();
+    })();
+  </script>
+</body>
+</html>
+```
